@@ -263,7 +263,7 @@ export const useGameStore = defineStore('game', () => {
     const hatLevel = p.team === 'gnomes' ? (p.upgrades['hat_collection'] || 0) : 0
     const formationLevel = p.team === 'soldiers' ? (p.upgrades['battle_formation'] || 0) : 0
     const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05
-    return Math.floor(autoClickers * teamBonus * 10)
+    return Math.floor(autoClickers * teamBonus)
   }
 
   return {
