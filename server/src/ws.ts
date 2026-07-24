@@ -22,7 +22,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
   wss = new WebSocketServer({ server: httpServer });
 
   httpServer.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 
   wss.on('close', () => {

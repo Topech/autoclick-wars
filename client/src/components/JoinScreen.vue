@@ -11,9 +11,11 @@ function handleJoin() {
   const raw = urlInput.value.trim().replace(/\/+$/, '')
   let wsUrl: string
   if (raw.startsWith('ws')) {
-    wsUrl = raw.replace(/^http/, 'ws')
+    wsUrl = raw
   } else {
-    wsUrl = raw.replace(/^http/, 'ws') + ':3001'
+    const parsed = new URL(raw)
+    const port = parsed.port || '3001'
+    wsUrl = `ws://${parsed.hostname}:${port}`
   }
   localStorage.setItem(STORAGE_KEY, urlInput.value.trim())
   store.join(nameInput.value.trim(), wsUrl)
