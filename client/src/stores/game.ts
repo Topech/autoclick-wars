@@ -65,6 +65,15 @@ export const useGameStore = defineStore('game', () => {
   const clickFlash = ref(false)
   const lastScores = ref({ gnomes: 0, soldiers: 0 })
   const scoreChange = ref<'up' | 'down' | null>(null)
+  const clickBurst = ref(false)
+  const valueFlash = ref(0)
+
+  function triggerClickBurst() {
+    clickBurst.value = true
+    valueFlash.value = 1
+    setTimeout(() => { clickBurst.value = false }, 200)
+    setTimeout(() => { valueFlash.value = 0 }, 300)
+  }
 
   function connect(url?: string) {
     disconnect()
@@ -157,6 +166,7 @@ export const useGameStore = defineStore('game', () => {
           }
           lastClickPoints.value = msg.points || 0
           triggerClickFlash()
+          triggerClickBurst()
         }
         break
 
@@ -281,7 +291,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash,
     join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
     myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }
