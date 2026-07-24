@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'ws://localhost:3001'
+const DEFAULT_SERVER = 'http://localhost:3001'
+const STORAGE_KEY = 'autoclick_server_url'
+
+function getServerUrl(): string {
+  return localStorage.getItem(STORAGE_KEY) || DEFAULT_SERVER
+}
+
+function setServerUrl(url: string) {
+  localStorage.setItem(STORAGE_KEY, url)
+}
 
 export type Team = 'gnomes' | 'soldiers'
 
@@ -57,10 +66,11 @@ export const useGameStore = defineStore('game', () => {
   const lastScores = ref({ gnomes: 0, soldiers: 0 })
   const scoreChange = ref<'up' | 'down' | null>(null)
 
-  function connect() {
+  function connect(url?: string) {
     disconnect()
-    const url = SERVER_URL.replace(/^http/, 'ws')
-    const socket = new WebSocket(url)
+    const serverUrl = url || getServerUrl()
+    const wsUrl = serverUrl.replace(/^http/, 'ws')
+    const socket = new WebSocket(wsUrl)
 
     socket.onopen = () => {
       connected.value = true
@@ -118,7 +128,8 @@ export const useGameStore = defineStore('game', () => {
             myPlayer.value = { ...myPlayer.value, ...myServerPlayer } as Player
           }
           gameState.value = {
-            ...gameState.value,
+            gnomesScore: gameState.value?.gnomesScore || 0,
+            soldiersScore: gameState.value?.soldiersScore || 0,
             players: playerMap,
           }
         }
@@ -190,14 +201,17 @@ export const useGameStore = defineStore('game', () => {
     setTimeout(() => { clickFlash.value = false }, 200)
   }
 
-  function join() {
+  function join(name: string, url: string) {
     const id = crypto.randomUUID()
-    const name = playerName.value.trim() || `player_${id.slice(0, 4)}`
+    const displayName = name || `player_${id.slice(0, 4)}`
+    
+    setServerUrl(url)
+    
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
-      connect()
-      setTimeout(() => sendMsg({ type: 'join', id, name }), 500)
+      connect(url)
+      setTimeout(() => sendMsg({ type: 'join', id, name: displayName }), 500)
     } else {
-      sendMsg({ type: 'join', id, name })
+      sendMsg({ type: 'join', id, name: displayName })
     }
   }
 

@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
+import { ref } from 'vue'
 
+const STORAGE_KEY = 'autoclick_server_url'
 const store = useGameStore()
-const nameInput = store.playerName
+const nameInput = ref('')
+const urlInput = ref(localStorage.getItem(STORAGE_KEY) || 'http://localhost')
 
 function handleJoin() {
-  store.join()
+  const raw = urlInput.value.trim().replace(/\/+$/, '')
+  let wsUrl: string
+  if (raw.startsWith('ws')) {
+    wsUrl = raw.replace(/^http/, 'ws')
+  } else {
+    wsUrl = raw.replace(/^http/, 'ws') + ':3001'
+  }
+  localStorage.setItem(STORAGE_KEY, urlInput.value.trim())
+  store.join(nameInput.value.trim(), wsUrl)
 }
 </script>
 
@@ -22,6 +33,16 @@ function handleJoin() {
         maxlength="20"
         class="name-input"
         @keyup.enter="handleJoin"
+      />
+    </div>
+
+    <div class="url-input-wrap">
+      <input
+        v-model="urlInput"
+        type="text"
+        placeholder="Server URL (http://localhost)"
+        maxlength="100"
+        class="url-input"
       />
     </div>
 
@@ -61,9 +82,26 @@ function handleJoin() {
   text-align: center;
 }
 
-.name-input-wrap {
+.url-input-wrap {
   width: 100%;
   max-width: 320px;
+}
+
+.url-input {
+  width: 100%;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  text-align: center;
+}
+
+.url-input:focus {
+  border-color: var(--accent);
 }
 
 .name-input {
