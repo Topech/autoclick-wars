@@ -43,7 +43,7 @@ function refresh() {
           </td>
           <td class="team">
             <span :class="['team-badge', entry.team]">
-              {{ entry.team === 'gnomes' ? '🍄' : '🎖️' }}
+              {{ entry.team === 'gnomes' ? '🍄' : '🔫' }}
             </span>
           </td>
           <td class="points">{{ store.formatNum(entry.totalPoints) }}</td>

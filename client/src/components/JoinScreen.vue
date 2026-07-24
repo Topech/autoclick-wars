@@ -4,15 +4,15 @@ import { useGameStore } from '../stores/game'
 const store = useGameStore()
 const nameInput = store.playerName
 
-function selectTeam(team: 'gnomes' | 'soldiers') {
-  store.join(team)
+function handleJoin() {
+  store.join()
 }
 </script>
 
 <template>
   <div class="join-screen">
     <h1 class="title">Gnomes vs Toy Soldiers</h1>
-    <p class="subtitle">Choose your team and enter the battlefield!</p>
+    <p class="subtitle">Enter the battlefield!</p>
 
     <div class="name-input-wrap">
       <input
@@ -21,28 +21,11 @@ function selectTeam(team: 'gnomes' | 'soldiers') {
         placeholder="Enter your name..."
         maxlength="20"
         class="name-input"
+        @keyup.enter="handleJoin"
       />
     </div>
 
-    <div class="team-cards">
-      <button
-        class="team-card gnome-card"
-        @click="selectTeam('gnomes')"
-      >
-        <span class="team-emoji">🍄</span>
-        <span class="team-name">Gnomes</span>
-        <span class="team-desc">Forest creatures of mischief</span>
-      </button>
-
-      <button
-        class="team-card soldier-card"
-        @click="selectTeam('soldiers')"
-      >
-        <span class="team-emoji">🎖️</span>
-        <span class="team-name">Toy Soldiers</span>
-        <span class="team-desc">Tiny troops, mighty clicks</span>
-      </button>
-    </div>
+    <button class="join-btn" @click="handleJoin">Join</button>
 
     <p v-if="!store.connected" class="connect-hint">
       Connecting to server...
@@ -100,62 +83,26 @@ function selectTeam(team: 'gnomes' | 'soldiers') {
   border-color: var(--accent);
 }
 
-.team-cards {
-  display: flex;
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 600px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.team-card {
-  flex: 1;
-  min-width: 240px;
-  max-width: 300px;
-  padding: 2rem 1.5rem;
+.join-btn {
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 800;
   border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4ade80, #2d6a4f);
   color: white;
-}
-
-.team-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
-}
-
-.team-card:active {
-  transform: scale(0.97);
-}
-
-.gnome-card {
-  background: linear-gradient(135deg, #2d6a4f, #52b788);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
   box-shadow: 0 4px 16px rgba(45, 106, 79, 0.4);
 }
 
-.soldier-card {
-  background: linear-gradient(135deg, #9b2226, #e63946);
-  box-shadow: 0 4px 16px rgba(155, 34, 38, 0.4);
+.join-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(45, 106, 79, 0.5);
 }
 
-.team-emoji {
-  font-size: 3rem;
-}
-
-.team-name {
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.team-desc {
-  font-size: 0.9rem;
-  opacity: 0.85;
+.join-btn:active {
+  transform: scale(0.97);
 }
 
 .connect-hint {

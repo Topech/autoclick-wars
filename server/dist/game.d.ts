@@ -4,7 +4,9 @@ export declare function getGameState(): {
     soldiersScore: number;
     playerCount: number;
 };
+export declare function getLeaderboardFromMemory(team?: 'gnomes' | 'soldiers', limit?: number): any[];
 export declare function getPlayer(playerId: string): Player | undefined;
+export declare function getPlayers(): Map<string, Player>;
 export declare function joinPlayer(id: string, name: string): Promise<Player>;
 export declare function handlePlayerClick(playerId: string): ClickEvent | null;
 export declare function buyUpgrade(playerId: string, upgradeId: string): {
@@ -15,6 +17,16 @@ export declare function buyUpgrade(playerId: string, upgradeId: string): {
 export declare function getUpgradeInfo(playerId: string): {
     currentLevel: number;
     nextCost: number;
+    id: string;
+    name: string;
+    description: string;
+    team: import("./types.js").Team;
+    baseCost: number;
+    costMultiplier: number;
+    effect: (level: number) => number;
+    category: "click" | "auto" | "crit" | "team";
+}[];
+export declare function getAllUpgrades(): {
     id: string;
     name: string;
     description: string;

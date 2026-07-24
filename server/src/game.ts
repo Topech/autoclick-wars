@@ -23,14 +23,35 @@ export function getGameState() {
   };
 }
 
+export function getLeaderboardFromMemory(team?: 'gnomes' | 'soldiers', limit = 20): any[] {
+  const players = [...gameState.players.values()];
+  const filtered = team ? players.filter(p => p.team === team) : players;
+  return filtered
+    .sort((a, b) => b.totalPoints - a.totalPoints)
+    .slice(0, limit)
+    .map((p, i) => ({
+      id: p.id,
+      name: p.name,
+      team: p.team,
+      totalPoints: p.totalPoints,
+      totalClicks: p.totalClicks,
+      rank: i + 1,
+    }));
+}
+
 export function getPlayer(playerId: string): Player | undefined {
   return gameState.players.get(playerId);
+}
+
+export function getPlayers(): Map<string, Player> {
+  return gameState.players;
 }
 
 export async function joinPlayer(id: string, name: string): Promise<Player> {
   // Try to load existing player from DB
   const existing = await loadPlayer(id);
   if (existing) {
+    existing.name = name;
     gameState.players.set(id, existing);
     recalcScores();
     return existing;
@@ -121,12 +142,16 @@ export function getUpgradeInfo(playerId: string) {
   }));
 }
 
+export function getAllUpgrades() {
+  return allUpgrades.map(u => ({ ...u }));
+}
+
 function recalcScores(): void {
   let gnomes = 0;
   let soldiers = 0;
   for (const player of gameState.players.values()) {
-    if (player.team === 'gnomes') gnomes += player.points;
-    else soldiers += player.points;
+    if (player.team === 'gnomes') gnomes += player.totalPoints;
+    else soldiers += player.totalPoints;
   }
   gameState.gnomesScore = gnomes;
   gameState.soldiersScore = soldiers;

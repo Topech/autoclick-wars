@@ -14,10 +14,14 @@ const activeTab = ref<'shop' | 'leaderboard'>('shop')
   <div class="game-screen">
     <TeamBar />
 
+    <div class="player-bar" v-if="store.myPlayer">
+      <span class="player-name">{{ store.myPlayer.name }}</span>
+      <span class="player-points">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
+    </div>
+
     <div class="stats-bar" v-if="store.myPlayer">
-      <span>⚡ {{ store.formatNum(store.myPlayer.totalPoints) }} pts</span>
       <span>👆 Power: {{ store.myPlayer.points }}</span>
-      <span>🤖 Auto: {{ store.myPlayer.totalClicks }}/s</span>
+      <span>🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
     </div>
 
     <ClickButton />
@@ -51,6 +55,27 @@ const activeTab = ref<'shop' | 'leaderboard'>('shop')
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+.player-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.player-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.player-points {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .stats-bar {

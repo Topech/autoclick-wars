@@ -5,4 +5,5 @@ export declare function startServer(): {
     app: Express;
     wss: WebSocketServer;
 };
+export declare function broadcastToAll(message: any): void;
 export { wss };

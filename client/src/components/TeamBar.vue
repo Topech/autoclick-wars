@@ -17,7 +17,7 @@ const store = useGameStore()
     </div>
 
     <div class="team soldier-team">
-      <span class="team-emoji">🎖️</span>
+      <span class="team-emoji">🔫</span>
       <span class="team-name">Soldiers</span>
       <span class="team-score">{{ store.formatNum(store.teamScores.soldiers) }}</span>
     </div>

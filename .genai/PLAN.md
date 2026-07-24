@@ -118,5 +118,9 @@ autoclick-wars/
 7. Client: Game screen (score, click button, animations) ✅
 8. Client: Upgrade shop ✅
 9. Client: Leaderboard ✅
-10. **Integration testing: Start client dev server + running server** ← NEXT
-11. Polish: Balance tuning, all animations, responsive design (deferred)
+10. Integration testing: Start client dev server + running server ✅
+11. Client build static files for GitHub Apps deployment ✅
+12. Team-specific upgrades (Gnomes see gnome upgrades, Soldiers see soldier upgrades) ✅
+13. **User persistence with login/password authentication** ← NEXT
+14. Leaderboard bug fix: `totalPoints` shows 0
+15. Balance tuning & polish

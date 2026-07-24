@@ -49,8 +49,10 @@ export const useGameStore = defineStore('game', () => {
   const myPlayer = ref<Player | null>(null)
   const gameState = ref<GameState | null>(null)
   const leaderboard = ref<LeaderboardEntry[]>([])
+  const upgrades = ref<UpgradeDef[]>([])
   const error = ref<string | null>(null)
   const playerName = ref('')
+  const lastClickPoints = ref(0)
   const clickFlash = ref(false)
   const lastScores = ref({ gnomes: 0, soldiers: 0 })
   const scoreChange = ref<'up' | 'down' | null>(null)
@@ -98,10 +100,28 @@ export const useGameStore = defineStore('game', () => {
       case 'joined':
         myPlayer.value = msg.player
         gameState.value = msg.gameState
+        if (ws.value?.readyState === WebSocket.OPEN) {
+          ws.value.send(JSON.stringify({ type: 'get_upgrades' }))
+        }
         break
 
       case 'game_state':
         gameState.value = msg.gameState
+        if (msg.players && myPlayer.value) {
+          const playerMap = new Map<string, Player>()
+          for (const p of msg.players as any[]) {
+            playerMap.set(p.id, p)
+          }
+          // Update my player data from server
+          const myServerPlayer = msg.players.find((p: any) => p.id === myPlayer.value!.id)
+          if (myServerPlayer) {
+            myPlayer.value = { ...myPlayer.value, ...myServerPlayer } as Player
+          }
+          gameState.value = {
+            ...gameState.value,
+            players: playerMap,
+          }
+        }
         break
 
       case 'score_update':
@@ -121,12 +141,23 @@ export const useGameStore = defineStore('game', () => {
       case 'click_result':
         if (msg.gameState) {
           gameState.value = msg.gameState
+          if (msg.player) {
+            myPlayer.value = { ...myPlayer.value, ...msg.player } as Player
+          }
+          lastClickPoints.value = msg.points || 0
           triggerClickFlash()
         }
         break
 
       case 'upgrade_bought':
         if (gameState.value) gameState.value = msg.gameState
+        if (msg.player) {
+          myPlayer.value = { ...myPlayer.value, ...msg.player } as Player
+        }
+        break
+
+      case 'upgrades':
+        upgrades.value = (msg.upgrades || []) as UpgradeDef[]
         break
 
       case 'upgrade_failed':
@@ -159,14 +190,14 @@ export const useGameStore = defineStore('game', () => {
     setTimeout(() => { clickFlash.value = false }, 200)
   }
 
-  function join(team: Team) {
+  function join() {
     const id = crypto.randomUUID()
-    const name = playerName.value.trim() || `${team.slice(0, 3)}_${id.slice(0, 4)}`
+    const name = playerName.value.trim() || `player_${id.slice(0, 4)}`
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect()
-      setTimeout(() => sendMsg({ type: 'join', id, name, team }), 500)
+      setTimeout(() => sendMsg({ type: 'join', id, name }), 500)
     } else {
-      sendMsg({ type: 'join', id, name, team })
+      sendMsg({ type: 'join', id, name })
     }
   }
 
@@ -185,6 +216,12 @@ export const useGameStore = defineStore('game', () => {
   function getLeaderboard() {
     if (ws.value?.readyState === WebSocket.OPEN) {
       ws.value.send(JSON.stringify({ type: 'get_leaderboard' }))
+    }
+  }
+
+  function getUpgrades() {
+    if (ws.value?.readyState === WebSocket.OPEN) {
+      ws.value.send(JSON.stringify({ type: 'get_upgrades' }))
     }
   }
 
@@ -212,9 +249,26 @@ export const useGameStore = defineStore('game', () => {
     return Math.floor(baseCost * Math.pow(multiplier, level))
   }
 
+  function getAutoClickRate(): number {
+    if (!myPlayer.value) return 0
+    const p = myPlayer.value
+    let autoClickers = 0
+    if (p.team === 'gnomes') {
+      autoClickers += (p.upgrades['mushroom_stool'] || 0)
+      autoClickers += (p.upgrades['gnome_army'] || 0) * 50
+    } else {
+      autoClickers += (p.upgrades['plastic_ruler'] || 0)
+      autoClickers += (p.upgrades['tank_division'] || 0) * 50
+    }
+    const hatLevel = p.team === 'gnomes' ? (p.upgrades['hat_collection'] || 0) : 0
+    const formationLevel = p.team === 'soldiers' ? (p.upgrades['battle_formation'] || 0) : 0
+    const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05
+    return Math.floor(autoClickers * teamBonus * 10)
+  }
+
   return {
-    connected, myPlayer, gameState, leaderboard, error, playerName, clickFlash, scoreChange,
-    join, sendClick, purchaseUpgrade, getLeaderboard, connect, disconnect,
-    myTeam, teamScores, totalScore, formatNum, getUpgradeCost,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange,
+    join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
+    myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }
 })

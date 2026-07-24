@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
@@ -15,18 +15,10 @@ interface UpgradeDef {
   category: 'click' | 'auto' | 'crit' | 'team'
 }
 
-const upgrades: UpgradeDef[] = [
-  { id: 'mushroom', name: '🍄 Mushroom Stool', description: '+1 auto-clicker', team: 'gnomes', baseCost: 10, costMultiplier: 1.15, effect: (l) => l, category: 'auto' },
-  { id: 'beer', name: '🍺 Beer Chug', description: '×2 click power', team: 'gnomes', baseCost: 50, costMultiplier: 1.15, effect: (l) => Math.pow(2, l), category: 'click' },
-  { id: 'hat', name: '🎩 Hat Collection', description: '+5% per hat', team: 'gnomes', baseCost: 100, costMultiplier: 1.15, effect: (l) => 1 + l * 0.05, category: 'team' },
-  { id: 'army', name: '🏰 Gnome Army', description: 'Massive auto-clicker boost', team: 'gnomes', baseCost: 500, costMultiplier: 1.15, effect: (l) => l * 10, category: 'auto' },
-  { id: 'fart', name: '💨 Epic Fart Noise', description: '10% crit chance for 30s', team: 'gnomes', baseCost: 1000, costMultiplier: 1.15, effect: (l) => l * 0.1, category: 'crit' },
-  { id: 'ruler', name: '📏 Plastic Ruler', description: '+1 auto-clicker', team: 'soldiers', baseCost: 10, costMultiplier: 1.15, effect: (l) => l, category: 'auto' },
-  { id: 'drill', name: '⚙️ Drill Sergeant', description: '×2 click power', team: 'soldiers', baseCost: 50, costMultiplier: 1.15, effect: (l) => Math.pow(2, l), category: 'click' },
-  { id: 'formation', name: '📐 Battle Formation', description: '+5% per formation', team: 'soldiers', baseCost: 100, costMultiplier: 1.15, effect: (l) => 1 + l * 0.05, category: 'team' },
-  { id: 'tank', name: '🛡️ Tank Division', description: 'Massive auto-clicker boost', team: 'soldiers', baseCost: 500, costMultiplier: 1.15, effect: (l) => l * 10, category: 'auto' },
-  { id: 'airhorn', name: '📢 Air Horn Rally', description: '10% crit chance for 30s', team: 'soldiers', baseCost: 1000, costMultiplier: 1.15, effect: (l) => l * 0.1, category: 'crit' },
-]
+const upgrades = computed(() => {
+  if (!store.myTeam) return []
+  return store.upgrades.filter(u => u.team === store.myTeam)
+})
 
 const bulkOptions = [1, 10, 100]
 const selectedBulk = ref(1)

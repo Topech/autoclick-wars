@@ -2,8 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState } from './game.js';
-import { getLeaderboard } from './db.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer } from './game.js';
 
 interface WsExt extends WebSocket {
   playerId: string;
@@ -62,10 +61,12 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         case 'click': {
           const result = handlePlayerClick(ws.playerId);
           if (result) {
+            const player = getPlayer(ws.playerId);
             ws.send(JSON.stringify({
               type: 'click_result',
               points: result.points,
               isCrit: result.isCrit,
+              player: serializePlayer(player),
               gameState: getGameState(),
             }));
             broadcastToAll({
@@ -80,6 +81,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
           const result = buyUpgrade(ws.playerId, msg.upgradeId);
           if (result.success) {
             const upgrades = getUpgradeInfo(ws.playerId);
+            const player = getPlayer(ws.playerId);
             ws.send(JSON.stringify({
               type: 'upgrade_bought',
               upgradeId: msg.upgradeId,
@@ -87,7 +89,12 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
               cost: result.cost,
               upgrades,
               gameState: getGameState(),
+              player: serializePlayer(player),
             }));
+            broadcastToAll({
+              type: 'score_update',
+              gameState: getGameState(),
+            });
           } else {
             ws.send(JSON.stringify({
               type: 'upgrade_failed',
@@ -97,18 +104,19 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
           break;
         }
 
+        case 'get_upgrades': {
+          ws.send(JSON.stringify({
+            type: 'upgrades',
+            upgrades: getAllUpgrades(),
+          }));
+          break;
+        }
+
         case 'get_leaderboard': {
-          const lb = await getLeaderboard(ws.team);
+          const lb = getLeaderboardFromMemory(ws.team);
           ws.send(JSON.stringify({
             type: 'leaderboard',
-            entries: (lb as any[]).map((e: any, i: number) => ({
-              id: e.id,
-              name: e.name,
-              team: e.team,
-              totalPoints: e.total_points,
-              totalClicks: e.total_clicks,
-              rank: i + 1,
-            })),
+            entries: lb,
           }));
           break;
         }
@@ -149,7 +157,7 @@ function broadcastToTeam(team: string, message: any) {
   }
 }
 
-function broadcastToAll(message: any) {
+export function broadcastToAll(message: any) {
   const data = JSON.stringify(message);
   for (const ws of wss.clients) {
     (ws as WebSocket).send(data);

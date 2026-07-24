@@ -12,10 +12,10 @@ function handleClick() {
   <div class="click-area" @click="handleClick">
     <div class="click-btn">
       <span v-if="store.myPlayer?.team === 'gnomes'" class="btn-emoji">🍄</span>
-      <span v-else class="btn-emoji">🎖️</span>
+      <span v-else class="btn-emoji">🔫</span>
       <span class="btn-text">CLICK!</span>
     </div>
-    <p v-if="store.clickFlash" class="flash-text">+1</p>
+    <p v-if="store.clickFlash" class="flash-text">{{ store.lastClickPoints > 0 ? '+' : '' }}{{ Math.floor(store.lastClickPoints) }}</p>
   </div>
 </template>
 
