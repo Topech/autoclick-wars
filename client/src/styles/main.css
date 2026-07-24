@@ -1,0 +1,38 @@
+:root {
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --border: #334155;
+  --accent: #52b788;
+  --accent-gnome: #4ade80;
+  --accent-soldier: #f87171;
+  --gnome-bg: linear-gradient(135deg, #1a3a2a, #2d6a4f);
+  --soldier-bg: linear-gradient(135deg, #3a1a1a, #9b2226);
+  --gold: #fbbf24;
+  --shadow: rgba(0, 0, 0, 0.4) 0 4px 12px;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
