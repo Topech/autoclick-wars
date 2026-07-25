@@ -11,8 +11,6 @@ const activeTab = ref<'shop' | 'leaderboard'>('shop')
 const tabFlash = ref(false)
 let lastPoints = 0
 let lastAuto = 0
-let lastGnomes = 0
-let lastSoldiers = 0
 
 function handleTabChange(tab: 'shop' | 'leaderboard') {
   activeTab.value = tab
@@ -20,26 +18,15 @@ function handleTabChange(tab: 'shop' | 'leaderboard') {
   setTimeout(() => { tabFlash.value = false }, 200)
 }
 
-function animateValue(current: number, last: number): boolean {
-  if (current !== last) return true
-  return false
-}
-
 let pointsChanged = false
 let autoChanged = false
-let gnomesChanged = false
-let soldiersChanged = false
 
 function checkChanges() {
   const myPoints = store.myPlayer?.points || 0
   const autoRate = store.getAutoClickRate()
-  const gScore = store.teamScores.gnomes
-  const sScore = store.teamScores.soldiers
 
   pointsChanged = myPoints !== lastPoints
   autoChanged = autoRate !== lastAuto
-  gnomesChanged = gScore !== lastGnomes
-  soldiersChanged = sScore !== lastSoldiers
 
   if (pointsChanged || autoChanged) {
     store.clickBurst = true
@@ -48,8 +35,6 @@ function checkChanges() {
 
   lastPoints = myPoints
   lastAuto = autoRate
-  lastGnomes = gScore
-  lastSoldiers = sScore
 }
 
 setInterval(checkChanges, 50)

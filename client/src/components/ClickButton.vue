@@ -31,6 +31,7 @@ function handleClick(e: MouseEvent) {
 
   setTimeout(() => { isClicking.value = false }, 150)
   setTimeout(() => { shakeIntensity.value = 0 }, 200)
+  setTimeout(() => {cleanupParticles()}, 3000)
 }
 
 function cleanupParticles() {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onUnmounted } from 'vue'
 
 const store = useGameStore()
 let lastGnomes = 0
