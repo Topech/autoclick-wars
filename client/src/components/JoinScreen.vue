@@ -5,7 +5,7 @@ import { ref } from 'vue'
 const STORAGE_KEY = 'autoclick_server_url'
 const store = useGameStore()
 const nameInput = ref('')
-const urlInput = ref(localStorage.getItem(STORAGE_KEY) || 'http://localhost')
+const urlInput = ref('https://autoclick-wars.onrender.com')
 const isClicking = ref(false)
 const particles = ref<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([])
 

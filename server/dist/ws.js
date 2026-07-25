@@ -11,7 +11,7 @@ export function startServer() {
     const httpServer = http.createServer(app);
     wss = new WebSocketServer({ server: httpServer });
     httpServer.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
     });
     wss.on('close', () => {
         console.log('WebSocket server closed');

@@ -9,7 +9,7 @@ interface WsExt extends WebSocket {
   team: 'gnomes' | 'soldiers';
 }
 
-const PORT = process.env.GAME_SERVER_PORT || 3001;
+const PORT = Number(process.env.GAME_SERVER_PORT) || 3001;
 let wss: WebSocketServer;
 
 export function startServer(): { app: Express; wss: WebSocketServer } {
@@ -21,8 +21,9 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
   const httpServer = http.createServer(app);
   wss = new WebSocketServer({ server: httpServer });
 
-  httpServer.listen(PORT, () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  const HOST: String = '0.0.0.0';
+  httpServer.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
   });
 
   wss.on('close', () => {
