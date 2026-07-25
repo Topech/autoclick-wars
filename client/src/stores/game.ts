@@ -78,7 +78,9 @@ export const useGameStore = defineStore('game', () => {
   function connect(url?: string) {
     disconnect()
     const serverUrl = url || getServerUrl()
-    const wsUrl = serverUrl.replace(/^http/, 'ws')
+    const wsUrl = serverUrl
+      .replace(/^http/, 'ws')
+      .replace(/^https/, 'wss')
     const socket = new WebSocket(wsUrl)
 
     socket.onopen = () => {

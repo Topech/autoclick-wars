@@ -2,7 +2,6 @@
 import { useGameStore } from '../stores/game'
 import { ref } from 'vue'
 
-const STORAGE_KEY = 'autoclick_server_url'
 const store = useGameStore()
 const nameInput = ref('')
 const urlInput = ref('https://autoclick-wars.onrender.com')
@@ -24,17 +23,7 @@ function handleJoin() {
   isClicking.value = true
   setTimeout(() => isClicking.value = false, 300)
 
-  const raw = urlInput.value.trim().replace(/\/+$/, '')
-  let wsUrl: string
-  if (raw.startsWith('ws')) {
-    wsUrl = raw
-  } else {
-    const parsed = new URL(raw)
-    const port = parsed.port || '3001'
-    wsUrl = `ws://${parsed.hostname}:${port}`
-  }
-  localStorage.setItem(STORAGE_KEY, urlInput.value.trim())
-  store.join(nameInput.value.trim(), wsUrl)
+  store.join(nameInput.value.trim(), urlInput.value.trim())
 }
 </script>
 
