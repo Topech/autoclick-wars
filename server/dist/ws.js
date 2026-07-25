@@ -2,7 +2,7 @@ import { WebSocketServer } from 'ws';
 import express from 'express';
 import http from 'http';
 import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer } from './game.js';
-const PORT = process.env.GAME_SERVER_PORT || 3001;
+const PORT = Number(process.env.GAME_SERVER_PORT) || 3001;
 let wss;
 export function startServer() {
     const app = express();
@@ -10,8 +10,9 @@ export function startServer() {
     app.use(express.static('../client/dist'));
     const httpServer = http.createServer(app);
     wss = new WebSocketServer({ server: httpServer });
-    httpServer.listen(PORT, () => {
-        console.log(`Server running on http://0.0.0.0:${PORT}`);
+    const HOST = '0.0.0.0';
+    httpServer.listen(PORT, HOST, undefined, () => {
+        console.log(`Server running on http://${HOST}:${PORT}`);
     });
     wss.on('close', () => {
         console.log('WebSocket server closed');

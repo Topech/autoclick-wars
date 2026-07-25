@@ -21,8 +21,8 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
   const httpServer = http.createServer(app);
   wss = new WebSocketServer({ server: httpServer });
 
-  const HOST: String = '0.0.0.0';
-  httpServer.listen(PORT, HOST, () => {
+  const HOST: string = '0.0.0.0';
+  httpServer.listen(PORT, HOST, undefined, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
   });
 
