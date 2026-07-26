@@ -35,7 +35,21 @@ function canAfford(upgrade: UpgradeDef): boolean {
 }
 
 function buy(upgrade: UpgradeDef) {
-  store.purchaseUpgrade(upgrade.id)
+  store.purchaseUpgrade(upgrade.id, selectedBulk.value)
+}
+
+function getBulkCost(upgrade: UpgradeDef): number {
+  const owned = store.myPlayer?.upgrades?.[upgrade.id] || 0
+  let total = 0
+  for (let i = 0; i < selectedBulk.value; i++) {
+    total += store.getUpgradeCost(upgrade.baseCost, upgrade.costMultiplier, owned + i)
+  }
+  return total
+}
+
+function canAffordBulk(upgrade: UpgradeDef): boolean {
+  const cost = getBulkCost(upgrade)
+  return (store.myPlayer?.points || 0) >= cost
 }
 </script>
 
@@ -61,7 +75,7 @@ function buy(upgrade: UpgradeDef) {
         :class="{
           [u.team]: true,
           owned: (store.myPlayer?.upgrades?.[u.id] || 0) > 0,
-          affordable: canAfford(u),
+          affordable: canAffordBulk(u),
         }"
       >
         <div class="upgrade-header">
@@ -71,10 +85,10 @@ function buy(upgrade: UpgradeDef) {
         <p class="upgrade-desc">{{ u.description }}</p>
         <button
           class="buy-btn"
-          :disabled="!canAfford(u)"
+          :disabled="!canAffordBulk(u)"
           @click="buy(u)"
         >
-          <NumberTooltip :value="getCost(u)">{{ store.formatNum(getCost(u)) }}</NumberTooltip> pts
+          <NumberTooltip :value="getBulkCost(u)">{{ store.formatNum(getBulkCost(u)) }}</NumberTooltip> pts
         </button>
       </div>
     </div>

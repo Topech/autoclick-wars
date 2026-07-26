@@ -84,7 +84,12 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         }
 
         case 'buy_upgrade': {
-          const result = buyUpgrade(ws.playerId, msg.upgradeId);
+          const quantity = msg.quantity || 1;
+          let result: { success: boolean; cost: number; newLevel: number };
+          for (let i = 0; i < quantity; i++) {
+            result = buyUpgrade(ws.playerId, msg.upgradeId);
+            if (!result.success) break;
+          }
           if (result.success) {
             const upgrades = getUpgradeInfo(ws.playerId);
             const player = getPlayer(ws.playerId);

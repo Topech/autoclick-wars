@@ -374,9 +374,9 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function purchaseUpgrade(upgradeId: string) {
+  function purchaseUpgrade(upgradeId: string, quantity = 1) {
     if (ws.value?.readyState === WebSocket.OPEN) {
-      ws.value.send(JSON.stringify({ type: 'buy_upgrade', upgradeId }))
+      ws.value.send(JSON.stringify({ type: 'buy_upgrade', upgradeId, quantity }))
     }
   }
 
