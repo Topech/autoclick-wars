@@ -69,7 +69,10 @@ export const useGameStore = defineStore('game', () => {
   const valueFlash = ref(0)
   const _joining = ref(false)
   const _intentionalDisconnect = ref(false)
+  const _disconnected = ref(false)
   let _joinTimeoutId: ReturnType<typeof setTimeout> | null = null
+  let _lastMessageTime = Date.now()
+  let _heartbeatCheck: ReturnType<typeof setInterval> | null = null
 
   const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
 
@@ -88,18 +91,45 @@ export const useGameStore = defineStore('game', () => {
       .replace(/^https/, 'wss')
     const socket = new WebSocket(wsUrl)
 
+    _lastMessageTime = Date.now()
+
+    const connectTimeoutId = setTimeout(() => {
+      if (!connected.value) {
+        _disconnected.value = true
+        error.value = 'Cannot reach server'
+        ws.value?.close()
+        ws.value = null
+      }
+    }, 5000)
+
     socket.onopen = () => {
       connected.value = true
       error.value = null
       _intentionalDisconnect.value = false
+      _disconnected.value = false
+      clearTimeout(connectTimeoutId)
       // Clear join timeout on successful connect
       if (_joinTimeoutId) {
         clearTimeout(_joinTimeoutId)
         _joinTimeoutId = null
       }
+      // Start heartbeat check - server broadcasts every 100ms
+      _heartbeatCheck = setInterval(() => {
+        if (connected.value) {
+          const elapsed = Date.now() - _lastMessageTime
+          if (elapsed > 5000) {
+            connected.value = false
+            _disconnected.value = true
+            error.value = 'Lost connection to server'
+            ws.value?.close()
+            ws.value = null
+          }
+        }
+      }, 1000)
     }
 
     socket.onmessage = (event) => {
+      _lastMessageTime = Date.now()
       try {
         const msg = JSON.parse(event.data)
         handleMessage(msg)
@@ -108,9 +138,14 @@ export const useGameStore = defineStore('game', () => {
       }
     }
 
+    console.log('[WS] Connecting to', wsUrl)
+
     socket.onclose = () => {
+      if (_heartbeatCheck) clearInterval(_heartbeatCheck)
       connected.value = false
       if (!_intentionalDisconnect.value) {
+        _disconnected.value = true
+        error.value = 'Disconnected from server'
         setTimeout(connect, 2000)
       }
     }
@@ -143,6 +178,50 @@ export const useGameStore = defineStore('game', () => {
       ws.value.close()
       ws.value = null
     }
+  }
+
+  function startHeartbeat() {
+    stopHeartbeat()
+    _pingInterval = setInterval(() => {
+      if (ws.value?.readyState === WebSocket.OPEN) {
+        ws.value.send(JSON.stringify({ type: 'ping' }))
+        _pongTimeout = setTimeout(() => {
+          // No pong received, connection is dead - force disconnect state
+          stopHeartbeat()
+          connected.value = false
+          _disconnected.value = true
+          error.value = 'Lost connection to server'
+          ws.value?.close()
+          ws.value = null
+          setTimeout(connect, 2000)
+        }, 3000)
+      }
+    }, 15000)
+  }
+
+  function stopHeartbeat() {
+    if (_pingInterval) {
+      clearInterval(_pingInterval)
+      _pingInterval = null
+    }
+    if (_pongTimeout) {
+      clearTimeout(_pongTimeout)
+      _pongTimeout = null
+    }
+  }
+
+  function reconnect() {
+    _disconnected.value = false
+    error.value = null
+    connect()
+    // Rejoin after connecting
+    setTimeout(() => {
+      if (myPlayer.value && ws.value?.readyState === WebSocket.OPEN) {
+        const id = localStorage.getItem('autoclick_player_id') || myPlayer.value.id
+        const name = localStorage.getItem('autoclick_last_name') || myPlayer.value.name
+        ws.value.send(JSON.stringify({ type: 'join', id, name }))
+      }
+    }, 500)
   }
 
   function handleMessage(msg: any) {
@@ -354,7 +433,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin, reconnect, _disconnected,
     join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
     myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }

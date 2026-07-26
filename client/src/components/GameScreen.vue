@@ -41,43 +41,54 @@ setInterval(checkChanges, 50)
 </script>
 
 <template>
-  <div class="game-screen">
-    <TeamBar />
+    <div class="game-screen">
+      <TeamBar />
 
-    <div class="player-bar" v-if="store.myPlayer">
-      <span class="player-name">{{ store.myPlayer.name }}</span>
-      <span class="player-points" :class="{ 'flash': pointsChanged }">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
+      <div class="player-bar" v-if="store.myPlayer && !store._disconnected">
+        <span class="player-name">{{ store.myPlayer.name }}</span>
+        <span class="player-points" :class="{ 'flash': pointsChanged }">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
+      </div>
+
+      <div class="stats-bar" v-if="store.myPlayer && !store._disconnected">
+        <span :class="{ 'flash': pointsChanged }">👆 Power: {{ store.myPlayer.points }}</span>
+        <span :class="{ 'flash': autoChanged }">🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
+      </div>
+
+      <ClickButton v-if="!store._disconnected" />
+
+      <div class="tabs" :class="{ 'flash': tabFlash }" v-if="!store._disconnected">
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'shop' }"
+          @click="handleTabChange('shop')"
+        >
+          🛒 Shop
+        </button>
+        <button
+          class="tab"
+          :class="{ active: activeTab === 'leaderboard' }"
+          @click="handleTabChange('leaderboard')"
+        >
+          🏆 Leaderboard
+        </button>
+      </div>
+
+      <div class="tab-content" v-if="!store._disconnected">
+        <UpgradeShop v-if="activeTab === 'shop'" />
+        <Leaderboard v-if="activeTab === 'leaderboard'" />
+      </div>
+
+      <div v-if="store._disconnected" class="disconnected-overlay">
+        <div class="disconnected-box">
+          <div class="disconnected-icon">📡</div>
+          <h2>Disconnected from server</h2>
+          <p>Your points and upgrades are safe. Reconnect to continue playing.</p>
+          <button class="reconnect-btn" @click="store.reconnect()">
+            🔌 Reconnect
+          </button>
+        </div>
+      </div>
     </div>
-
-    <div class="stats-bar" v-if="store.myPlayer">
-      <span :class="{ 'flash': pointsChanged }">👆 Power: {{ store.myPlayer.points }}</span>
-      <span :class="{ 'flash': autoChanged }">🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
-    </div>
-
-    <ClickButton />
-
-    <div class="tabs" :class="{ 'flash': tabFlash }">
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'shop' }"
-        @click="handleTabChange('shop')"
-      >
-        🛒 Shop
-      </button>
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'leaderboard' }"
-        @click="handleTabChange('leaderboard')"
-      >
-        🏆 Leaderboard
-      </button>
-    </div>
-
-    <div class="tab-content">
-      <UpgradeShop v-if="activeTab === 'shop'" />
-      <Leaderboard v-if="activeTab === 'leaderboard'" />
-    </div>
-  </div>
 </template>
 
 <style scoped>
@@ -210,5 +221,68 @@ setInterval(checkChanges, 50)
 .tab-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.disconnected-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.disconnected-box {
+  text-align: center;
+  background: var(--bg-card);
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  max-width: 400px;
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
+}
+
+.disconnected-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: pingPong 2s ease-in-out infinite;
+}
+
+@keyframes pingPong {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px) rotate(-10deg); }
+  75% { transform: translateX(10px) rotate(10deg); }
+}
+
+.disconnected-box h2 {
+  color: var(--text);
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.disconnected-box p {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+}
+
+.reconnect-btn {
+  padding: 0.75rem 2rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reconnect-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
+}
+
+.reconnect-btn:active {
+  transform: translateY(1px) scale(0.95);
 }
 </style>
