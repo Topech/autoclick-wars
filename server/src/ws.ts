@@ -119,7 +119,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         }
 
         case 'get_leaderboard': {
-          const lb = getLeaderboardFromMemory(ws.team);
+          const lb = getLeaderboardFromMemory();
           ws.send(JSON.stringify({
             type: 'leaderboard',
             entries: lb,

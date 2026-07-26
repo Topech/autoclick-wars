@@ -4,6 +4,7 @@ import TeamBar from './TeamBar.vue'
 import ClickButton from './ClickButton.vue'
 import UpgradeShop from './UpgradeShop.vue'
 import Leaderboard from './Leaderboard.vue'
+import PlayerAvatar from './PlayerAvatar.vue'
 import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
@@ -45,7 +46,7 @@ setInterval(checkChanges, 50)
       <TeamBar />
 
       <div class="player-bar" v-if="store.myPlayer && !store._disconnected">
-        <span class="player-name">{{ store.myPlayer.name }}</span>
+        <PlayerAvatar :name="store.myPlayer.name" :team="store.myPlayer.team" />
         <span :class="{ 'flash': pointsChanged }">⚔️ Power: {{ store.myPlayer.clickPower?.toFixed(1) || 1.0 }}</span>
         <span :class="{ 'flash': autoChanged }">🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
       </div>

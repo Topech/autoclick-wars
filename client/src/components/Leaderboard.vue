@@ -1,7 +1,20 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
+import PlayerAvatar from './PlayerAvatar.vue'
 
 const store = useGameStore()
+
+function load() {
+  store.getLeaderboard()
+}
+
+load()
+
+setInterval(() => {
+  if (store.leaderboard.length > 0 || store.myPlayer) {
+    store.getLeaderboard()
+  }
+}, 2000)
 
 function refresh() {
   store.getLeaderboard()
@@ -38,7 +51,7 @@ function refresh() {
         >
           <td class="rank">{{ entry.rank }}</td>
           <td class="name">
-            {{ entry.name }}
+            <PlayerAvatar :name="entry.name" :team="entry.team" />
             <span v-if="entry.id === store.myPlayer?.id" class="you-badge">(You)</span>
           </td>
           <td class="team">
