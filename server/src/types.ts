@@ -25,7 +25,6 @@ export interface UpgradeDef {
   team: Team;
   baseCost: number;
   costMultiplier: number;
-  effect: (level: number) => number;
   category: 'click' | 'auto' | 'crit' | 'team';
 }
 

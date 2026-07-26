@@ -110,11 +110,11 @@ export function handlePlayerClick(playerId: string): ClickEvent | null {
   player.lastSeen = Date.now();
 
   // Calculate click power
-  const beerLevel = player.upgrades['beer_chug'] || 0;
+  const clickUpgradeLevel = player.team === 'gnomes' ? (player.upgrades['beer_chug'] || 0) : (player.upgrades['drill_sergeant'] || 0);
   const hatLevel = player.team === 'gnomes' ? (player.upgrades['hat_collection'] || 0) : 0;
   const formationLevel = player.team === 'soldiers' ? (player.upgrades['battle_formation'] || 0) : 0;
 
-  let clickPower = Math.pow(2, beerLevel);
+  let clickPower = 1 + clickUpgradeLevel;
   const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05;
   clickPower *= teamBonus;
 
@@ -170,11 +170,11 @@ export function getAllUpgrades() {
 }
 
 export function getClickPower(player: Player): number {
-  const beerLevel = player.upgrades['beer_chug'] || 0;
+  const clickUpgradeLevel = player.team === 'gnomes' ? (player.upgrades['beer_chug'] || 0) : (player.upgrades['drill_sergeant'] || 0);
   const hatLevel = player.team === 'gnomes' ? (player.upgrades['hat_collection'] || 0) : 0;
   const formationLevel = player.team === 'soldiers' ? (player.upgrades['battle_formation'] || 0) : 0;
 
-  let clickPower = Math.pow(2, beerLevel);
+  let clickPower = 1 + clickUpgradeLevel;
   const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05;
   return clickPower * teamBonus;
 }
