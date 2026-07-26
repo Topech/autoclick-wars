@@ -5,6 +5,7 @@ import ClickButton from './ClickButton.vue'
 import UpgradeShop from './UpgradeShop.vue'
 import Leaderboard from './Leaderboard.vue'
 import PlayerAvatar from './PlayerAvatar.vue'
+import NumberTooltip from './NumberTooltip.vue'
 import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
@@ -52,8 +53,8 @@ setInterval(checkChanges, 50)
       </div>
 
       <div class="player-bar points-bar" v-if="store.myPlayer && !store._disconnected">
-        <span class="points-pill" :class="{ 'flash': pointsChanged }">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
-        <span class="player-total">📊 {{ store.formatNum(store.myPlayer.totalPoints) }} total</span>
+        <span class="points-pill" :class="{ 'flash': pointsChanged }">⚡ <NumberTooltip :value="store.myPlayer.points">{{ store.formatNum(store.myPlayer.points) }}</NumberTooltip></span>
+        <span class="player-total">📊 <NumberTooltip :value="store.myPlayer.totalPoints">{{ store.formatNum(store.myPlayer.totalPoints) }}</NumberTooltip> total</span>
       </div>
 
       <ClickButton v-if="!store._disconnected" />

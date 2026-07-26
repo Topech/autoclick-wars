@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
 import PlayerAvatar from './PlayerAvatar.vue'
+import NumberTooltip from './NumberTooltip.vue'
 
 const store = useGameStore()
 
@@ -59,8 +60,8 @@ function refresh() {
               {{ entry.team === 'gnomes' ? '🍄' : '🔫' }}
             </span>
           </td>
-          <td class="points">{{ store.formatNum(entry.totalPoints) }}</td>
-          <td class="clicks">{{ store.formatNum(entry.totalClicks) }}</td>
+          <td class="points"><NumberTooltip :value="entry.totalPoints">{{ store.formatNum(entry.totalPoints) }}</NumberTooltip></td>
+          <td class="clicks"><NumberTooltip :value="entry.totalClicks">{{ store.formatNum(entry.totalClicks) }}</NumberTooltip></td>
         </tr>
       </tbody>
     </table>

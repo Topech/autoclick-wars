@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore } from '../stores/game'
+import NumberTooltip from './NumberTooltip.vue'
 
 const store = useGameStore()
 
@@ -73,7 +74,7 @@ function buy(upgrade: UpgradeDef) {
           :disabled="!canAfford(u)"
           @click="buy(u)"
         >
-          {{ store.formatNum(getCost(u)) }} pts
+          <NumberTooltip :value="getCost(u)">{{ store.formatNum(getCost(u)) }}</NumberTooltip> pts
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
+import NumberTooltip from './NumberTooltip.vue'
 import { onUnmounted } from 'vue'
 
 const store = useGameStore()
@@ -38,7 +39,7 @@ onUnmounted(() => clearInterval(interval))
     <div class="team gnome-team">
       <span class="team-emoji" :class="{ 'flash': gnomesFlash }">🍄</span>
       <span class="team-name">Gnomes</span>
-      <span class="team-score" :class="{ 'flash': gnomesFlash }">{{ store.formatNum(store.teamScores.gnomes) }}</span>
+      <span class="team-score" :class="{ 'flash': gnomesFlash }"><NumberTooltip :value="store.teamScores.gnomes">{{ store.formatNum(store.teamScores.gnomes) }}</NumberTooltip></span>
     </div>
 
     <div class="vs-divider" :class="{ 'score-up': vsFlash }">
@@ -48,7 +49,7 @@ onUnmounted(() => clearInterval(interval))
     <div class="team soldier-team">
       <span class="team-emoji" :class="{ 'flash': soldiersFlash }">🔫</span>
       <span class="team-name">Soldiers</span>
-      <span class="team-score" :class="{ 'flash': soldiersFlash }">{{ store.formatNum(store.teamScores.soldiers) }}</span>
+      <span class="team-score" :class="{ 'flash': soldiersFlash }"><NumberTooltip :value="store.teamScores.soldiers">{{ store.formatNum(store.teamScores.soldiers) }}</NumberTooltip></span>
     </div>
   </div>
 </template>
