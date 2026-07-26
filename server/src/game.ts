@@ -11,6 +11,9 @@ let gameState: GameState = {
 
 let tickCount = 0;
 
+// Buffer passive income per player to aggregate per-second contributions
+const passiveBuffer = new Map<string, number>();
+
 // Track names currently taken by active connections
 const nameToId = new Map<string, string>();
 
@@ -238,7 +241,22 @@ export async function gameLoop(tickCallback: (state: GameState, tickCount: numbe
       player.points += passivePoints;
       player.totalPoints += passivePoints;
 
-      addContribution(player.id, player.name, player.team, passivePoints);
+      // Buffer passive income to aggregate per-second contributions
+      const currentBuffer = passiveBuffer.get(player.id) || 0;
+      passiveBuffer.set(player.id, currentBuffer + passivePoints);
+    }
+
+    // Flush passive buffer every 11 seconds (every 11 ticks)
+    if (tickCount % 11 === 0) {
+      for (const [playerId, points] of passiveBuffer.entries()) {
+        if (points >= 1) {
+          const player = gameState.players.get(playerId);
+          if (player) {
+            addContribution(player.id, player.name, player.team, points);
+          }
+        }
+      }
+      passiveBuffer.clear();
     }
 
     recalcScores();
