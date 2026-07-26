@@ -54,12 +54,12 @@ function resetServerUrl() {
     }"></div>
 
     <!-- Floating emojis -->
-    <div class="emoji emoji-1">🧙‍♂️</div>
-    <div class="emoji emoji-2">⚔️</div>
-    <div class="emoji emoji-3">🛡️</div>
-    <div class="emoji emoji-4">🏰</div>
-    <div class="emoji emoji-5">💀</div>
-    <div class="emoji emoji-6">🔥</div>
+    <div class="emoji emoji-1">🍄</div>
+    <div class="emoji emoji-2">🔫</div>
+    <div class="emoji emoji-3">🍄</div>
+    <div class="emoji emoji-4">🔫</div>
+    <div class="emoji emoji-5">🍄</div>
+    <div class="emoji emoji-6">🔫</div>
 
     <!-- Content -->
     <h1 class="title">
