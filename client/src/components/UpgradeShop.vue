@@ -24,16 +24,6 @@ const upgrades = computed(() => {
 const bulkOptions = [1, 10, 100]
 const selectedBulk = ref(1)
 
-function getCost(upgrade: UpgradeDef): number {
-  const owned = store.myPlayer?.upgrades?.[upgrade.id] || 0
-  return store.getUpgradeCost(upgrade.baseCost, upgrade.costMultiplier, owned)
-}
-
-function canAfford(upgrade: UpgradeDef): boolean {
-  const cost = getCost(upgrade)
-  return (store.myPlayer?.points || 0) >= cost
-}
-
 function buy(upgrade: UpgradeDef) {
   store.purchaseUpgrade(upgrade.id, selectedBulk.value)
 }

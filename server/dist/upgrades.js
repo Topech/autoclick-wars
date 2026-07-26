@@ -6,17 +6,15 @@ export const gnomeUpgrades = [
         team: 'gnomes',
         baseCost: 10,
         costMultiplier: 1.15,
-        effect: (level) => level,
         category: 'auto',
     },
     {
         id: 'beer_chug',
         name: '🍺 Beer Chug',
-        description: '×2 click power per level',
+        description: '+1 click power per level',
         team: 'gnomes',
         baseCost: 50,
         costMultiplier: 1.25,
-        effect: (level) => Math.pow(2, level),
         category: 'click',
     },
     {
@@ -26,7 +24,6 @@ export const gnomeUpgrades = [
         team: 'gnomes',
         baseCost: 200,
         costMultiplier: 1.30,
-        effect: (level) => 1 + level * 0.05,
         category: 'team',
     },
     {
@@ -36,7 +33,6 @@ export const gnomeUpgrades = [
         team: 'gnomes',
         baseCost: 1000,
         costMultiplier: 1.20,
-        effect: (level) => level * 50,
         category: 'auto',
     },
     {
@@ -46,7 +42,6 @@ export const gnomeUpgrades = [
         team: 'gnomes',
         baseCost: 500,
         costMultiplier: 2.0,
-        effect: (level) => level * 0.10,
         category: 'crit',
     },
 ];
@@ -58,17 +53,15 @@ export const soldierUpgrades = [
         team: 'soldiers',
         baseCost: 10,
         costMultiplier: 1.15,
-        effect: (level) => level,
         category: 'auto',
     },
     {
         id: 'drill_sergeant',
         name: '🎖️ Drill Sergeant',
-        description: '×2 click power per level',
+        description: '+1 click power per level',
         team: 'soldiers',
         baseCost: 50,
         costMultiplier: 1.25,
-        effect: (level) => Math.pow(2, level),
         category: 'click',
     },
     {
@@ -78,7 +71,6 @@ export const soldierUpgrades = [
         team: 'soldiers',
         baseCost: 200,
         costMultiplier: 1.30,
-        effect: (level) => 1 + level * 0.05,
         category: 'team',
     },
     {
@@ -88,7 +80,6 @@ export const soldierUpgrades = [
         team: 'soldiers',
         baseCost: 1000,
         costMultiplier: 1.20,
-        effect: (level) => level * 50,
         category: 'auto',
     },
     {
@@ -98,7 +89,6 @@ export const soldierUpgrades = [
         team: 'soldiers',
         baseCost: 500,
         costMultiplier: 2.0,
-        effect: (level) => level * 0.10,
         category: 'crit',
     },
 ];

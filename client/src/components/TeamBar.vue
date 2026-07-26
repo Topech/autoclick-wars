@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
 import NumberTooltip from './NumberTooltip.vue'
-import { onUnmounted, ref, computed } from 'vue'
+import { onUnmounted, computed } from 'vue'
 
 const store = useGameStore()
 let lastGnomes = 0
@@ -12,16 +12,6 @@ let vsFlash = false
 
 const gnomeContribs = computed(() => store.contributions.filter(c => c.team === 'gnomes').slice(-10))
 const soldierContribs = computed(() => store.contributions.filter(c => c.team === 'soldiers').slice(-10))
-
-function getRandomPos() {
-  const positions = [
-    { x: -40, y: -25 }, { x: 40, y: -25 },
-    { x: -55, y: 0 }, { x: 55, y: 0 },
-    { x: -40, y: 25 }, { x: 40, y: 25 },
-    { x: 0, y: -35 }, { x: 0, y: 35 },
-  ]
-  return positions[Math.floor(Math.random() * positions.length)]
-}
 
 function checkScores() {
   const gScore = store.teamScores.gnomes
@@ -55,7 +45,7 @@ onUnmounted(() => clearInterval(interval))
       <div class="score-wrapper">
         <span class="team-score" :class="{ 'flash': gnomesFlash }"><NumberTooltip :value="store.teamScores.gnomes">{{ store.formatNum(store.teamScores.gnomes) }}</NumberTooltip></span>
         <div class="contributions gnome">
-          <span v-for="c in gnomeContribs" :key="c.id" class="contribution gnome" :style="{ left: c.pos.x + 'px', top: c.pos.y + 'px' }">+{{ Math.floor(c.increase) }}</span>
+          <span v-for="c in gnomeContribs" :key="c.id" class="contribution gnome" :style="{ left: (c.pos?.x ?? 0) + 'px', top: (c.pos?.y ?? 0) + 'px' }">+{{ Math.floor(c.increase) }}</span>
         </div>
       </div>
     </div>
@@ -70,7 +60,7 @@ onUnmounted(() => clearInterval(interval))
       <div class="score-wrapper">
         <span class="team-score" :class="{ 'flash': soldiersFlash }"><NumberTooltip :value="store.teamScores.soldiers">{{ store.formatNum(store.teamScores.soldiers) }}</NumberTooltip></span>
         <div class="contributions soldier">
-          <span v-for="c in soldierContribs" :key="c.id" class="contribution soldier" :style="{ left: c.pos.x + 'px', top: c.pos.y + 'px' }">+{{ Math.floor(c.increase) }}</span>
+          <span v-for="c in soldierContribs" :key="c.id" class="contribution soldier" :style="{ left: (c.pos?.x ?? 0) + 'px', top: (c.pos?.y ?? 0) + 'px' }">+{{ Math.floor(c.increase) }}</span>
         </div>
       </div>
     </div>

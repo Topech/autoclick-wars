@@ -68,7 +68,7 @@ export const useGameStore = defineStore('game', () => {
   const scoreChange = ref<'up' | 'down' | null>(null)
   const clickBurst = ref(false)
   const valueFlash = ref(0)
-  const contributions = ref<Array<{ id: number; team: 'gnomes' | 'soldiers'; increase: number }>>([])
+  const contributions = ref<Array<{ id: number; team: 'gnomes' | 'soldiers'; increase: number; pos?: { x: number; y: number } }>>([])
   const _joining = ref(false)
   const _intentionalDisconnect = ref(false)
   const _disconnected = ref(false)
@@ -179,36 +179,6 @@ export const useGameStore = defineStore('game', () => {
     if (ws.value) {
       ws.value.close()
       ws.value = null
-    }
-  }
-
-  function startHeartbeat() {
-    stopHeartbeat()
-    _pingInterval = setInterval(() => {
-      if (ws.value?.readyState === WebSocket.OPEN) {
-        ws.value.send(JSON.stringify({ type: 'ping' }))
-        _pongTimeout = setTimeout(() => {
-          // No pong received, connection is dead - force disconnect state
-          stopHeartbeat()
-          connected.value = false
-          _disconnected.value = true
-          error.value = 'Lost connection to server'
-          ws.value?.close()
-          ws.value = null
-          setTimeout(connect, 2000)
-        }, 3000)
-      }
-    }, 15000)
-  }
-
-  function stopHeartbeat() {
-    if (_pingInterval) {
-      clearInterval(_pingInterval)
-      _pingInterval = null
-    }
-    if (_pongTimeout) {
-      clearTimeout(_pongTimeout)
-      _pongTimeout = null
     }
   }
 

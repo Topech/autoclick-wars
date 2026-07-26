@@ -1,15 +1,26 @@
 import { allUpgrades, getUpgradeCost } from './upgrades.js';
-import { savePlayer, loadPlayer, cleanupOfflinePlayers } from './db.js';
 const TICK_MS = 100;
-const SAVE_INTERVAL_MS = 30000;
-const CLEANUP_INTERVAL_MS = 300000;
-const OFFLINE_THRESHOLD_MS = 3600000; // 1 hour
 let gameState = {
     gnomesScore: 0,
     soldiersScore: 0,
     players: new Map(),
 };
 let tickCount = 0;
+// Buffer passive income per player to aggregate per-second contributions
+const passiveBuffer = new Map();
+// Track names currently taken by active connections
+const nameToId = new Map();
+let contributionEvents = [];
+export function addContribution(playerId, playerName, team, points) {
+    if (points >= 1) {
+        contributionEvents.push({ playerId, playerName, team, points });
+    }
+}
+export function getContributions() {
+    const events = [...contributionEvents];
+    contributionEvents.length = 0;
+    return events;
+}
 export function getGameState() {
     return {
         gnomesScore: gameState.gnomesScore,
@@ -38,14 +49,34 @@ export function getPlayer(playerId) {
 export function getPlayers() {
     return gameState.players;
 }
+export function removePlayer(id) {
+    const player = gameState.players.get(id);
+    if (player) {
+        nameToId.delete(player.name.toLowerCase());
+        // Keep player in memory so points/upgrades survive disconnects
+        // Only remove the name mapping so others can use that name
+    }
+}
+export function isNameTaken(name) {
+    return nameToId.has(name.toLowerCase());
+}
 export async function joinPlayer(id, name) {
-    // Try to load existing player from DB
-    const existing = await loadPlayer(id);
+    const normalizedName = name.toLowerCase().trim();
+    // Check if name is already taken by an active player
+    const existingIdForName = nameToId.get(normalizedName);
+    if (existingIdForName) {
+        return { error: `Player "${name}" is already connected` };
+    }
+    // Check if player already exists in memory (rejoin with same ID)
+    const existing = gameState.players.get(id);
     if (existing) {
+        // Remove old name mapping and add new one
+        nameToId.delete(existing.name.toLowerCase());
         existing.name = name;
-        gameState.players.set(id, existing);
+        existing.lastSeen = Date.now();
+        nameToId.set(normalizedName, existing.id);
         recalcScores();
-        return existing;
+        return { player: existing };
     }
     // Assign team (balance teams)
     const gnomesCount = [...gameState.players.values()].filter(p => p.team === 'gnomes').length;
@@ -63,9 +94,9 @@ export async function joinPlayer(id, name) {
         createdAt: Date.now(),
     };
     gameState.players.set(id, player);
-    await savePlayer(player);
+    nameToId.set(normalizedName, id);
     recalcScores();
-    return player;
+    return { player };
 }
 export function handlePlayerClick(playerId) {
     const player = gameState.players.get(playerId);
@@ -73,10 +104,10 @@ export function handlePlayerClick(playerId) {
         return null;
     player.lastSeen = Date.now();
     // Calculate click power
-    const beerLevel = player.upgrades['beer_chug'] || 0;
+    const clickUpgradeLevel = player.team === 'gnomes' ? (player.upgrades['beer_chug'] || 0) : (player.upgrades['drill_sergeant'] || 0);
     const hatLevel = player.team === 'gnomes' ? (player.upgrades['hat_collection'] || 0) : 0;
     const formationLevel = player.team === 'soldiers' ? (player.upgrades['battle_formation'] || 0) : 0;
-    let clickPower = Math.pow(2, beerLevel);
+    let clickPower = 1 + clickUpgradeLevel;
     const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05;
     clickPower *= teamBonus;
     // Check for crit (Epic Fart / Air Horn)
@@ -88,6 +119,7 @@ export function handlePlayerClick(playerId) {
     player.points += points;
     player.totalPoints += points;
     player.totalClicks++;
+    addContribution(player.id, player.name, player.team, points);
     recalcScores();
     return { playerId, points, isCrit, timestamp: Date.now() };
 }
@@ -121,7 +153,15 @@ export function getUpgradeInfo(playerId) {
 export function getAllUpgrades() {
     return allUpgrades.map(u => ({ ...u }));
 }
-function recalcScores() {
+export function getClickPower(player) {
+    const clickUpgradeLevel = player.team === 'gnomes' ? (player.upgrades['beer_chug'] || 0) : (player.upgrades['drill_sergeant'] || 0);
+    const hatLevel = player.team === 'gnomes' ? (player.upgrades['hat_collection'] || 0) : 0;
+    const formationLevel = player.team === 'soldiers' ? (player.upgrades['battle_formation'] || 0) : 0;
+    let clickPower = 1 + clickUpgradeLevel;
+    const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05;
+    return clickPower * teamBonus;
+}
+export function recalcScores() {
     let gnomes = 0;
     let soldiers = 0;
     for (const player of gameState.players.values()) {
@@ -154,27 +194,24 @@ export async function gameLoop(tickCallback) {
             const passivePoints = autoClickers * teamBonus * (TICK_MS / 1000);
             player.points += passivePoints;
             player.totalPoints += passivePoints;
+            // Buffer passive income to aggregate per-second contributions
+            const currentBuffer = passiveBuffer.get(player.id) || 0;
+            passiveBuffer.set(player.id, currentBuffer + passivePoints);
+        }
+        // Flush passive buffer every 11 seconds (every 11 ticks)
+        if (tickCount % 11 === 0) {
+            for (const [playerId, points] of passiveBuffer.entries()) {
+                if (points >= 1) {
+                    const player = gameState.players.get(playerId);
+                    if (player) {
+                        addContribution(player.id, player.name, player.team, points);
+                    }
+                }
+            }
+            passiveBuffer.clear();
         }
         recalcScores();
         tickCallback(gameState, tickCount);
-        // Save every 30 seconds
-        if (tickCount % (SAVE_INTERVAL_MS / TICK_MS) === 0) {
-            for (const player of gameState.players.values()) {
-                savePlayer(player).catch(() => { });
-            }
-        }
-        // Cleanup offline players every 5 minutes
-        if (tickCount % (CLEANUP_INTERVAL_MS / TICK_MS) === 0) {
-            const cutoff = Date.now() - OFFLINE_THRESHOLD_MS;
-            cleanupOfflinePlayers(cutoff).catch(() => { });
-            for (const [id, player] of gameState.players) {
-                if (player.lastSeen < cutoff) {
-                    savePlayer(player).catch(() => { });
-                    gameState.players.delete(id);
-                }
-            }
-            recalcScores();
-        }
     }, TICK_MS);
     return () => clearInterval(interval);
 }

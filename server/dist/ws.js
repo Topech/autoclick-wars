@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import express from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower } from './game.js';
 const PORT = Number(process.env.GAME_SERVER_PORT) || 3001;
 let wss;
 export function startServer() {
@@ -30,7 +30,12 @@ export function startServer() {
             }
             switch (msg.type) {
                 case 'join': {
-                    const player = await joinPlayer(msg.id, msg.name);
+                    const result = await joinPlayer(msg.id, msg.name);
+                    if (result.error) {
+                        ws.send(JSON.stringify({ type: 'join_error', error: result.error }));
+                        break;
+                    }
+                    const player = result.player;
                     ws.playerId = player.id;
                     ws.team = player.team;
                     broadcastToTeam(ws.team, {
@@ -63,7 +68,13 @@ export function startServer() {
                     break;
                 }
                 case 'buy_upgrade': {
-                    const result = buyUpgrade(ws.playerId, msg.upgradeId);
+                    const quantity = msg.quantity || 1;
+                    let result = { success: false, cost: 0, newLevel: 0 };
+                    for (let i = 0; i < quantity; i++) {
+                        result = buyUpgrade(ws.playerId, msg.upgradeId);
+                        if (!result.success)
+                            break;
+                    }
                     if (result.success) {
                         const upgrades = getUpgradeInfo(ws.playerId);
                         const player = getPlayer(ws.playerId);
@@ -97,7 +108,7 @@ export function startServer() {
                     break;
                 }
                 case 'get_leaderboard': {
-                    const lb = getLeaderboardFromMemory(ws.team);
+                    const lb = getLeaderboardFromMemory();
                     ws.send(JSON.stringify({
                         type: 'leaderboard',
                         entries: lb,
@@ -112,6 +123,7 @@ export function startServer() {
         });
         ws.on('close', () => {
             console.log('WebSocket disconnected');
+            removePlayer(ws.playerId);
         });
     });
     return { app, wss };
@@ -125,6 +137,7 @@ function serializePlayer(player) {
         totalPoints: player.totalPoints,
         totalClicks: player.totalClicks,
         upgrades: player.upgrades,
+        clickPower: getClickPower(player),
     };
 }
 function broadcastToTeam(team, message) {

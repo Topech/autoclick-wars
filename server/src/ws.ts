@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower, getRecentContributions } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower, getContributions } from './game.js';
 
 interface WsExt extends WebSocket {
   playerId: string;
@@ -85,7 +85,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
         case 'buy_upgrade': {
           const quantity = msg.quantity || 1;
-          let result: { success: boolean; cost: number; newLevel: number };
+          let result: { success: boolean; cost: number; newLevel: number } = { success: false, cost: 0, newLevel: 0 };
           for (let i = 0; i < quantity; i++) {
             result = buyUpgrade(ws.playerId, msg.upgradeId);
             if (!result.success) break;
