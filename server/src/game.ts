@@ -50,7 +50,8 @@ export function removePlayer(id: string) {
   const player = gameState.players.get(id);
   if (player) {
     nameToId.delete(player.name.toLowerCase());
-    gameState.players.delete(id);
+    // Keep player in memory so points/upgrades survive disconnects
+    // Only remove the name mapping so others can use that name
   }
 }
 
