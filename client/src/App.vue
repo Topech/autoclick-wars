@@ -4,7 +4,6 @@ import JoinScreen from './components/JoinScreen.vue'
 import GameScreen from './components/GameScreen.vue'
 
 const store = useGameStore()
-store.connect()
 </script>
 
 <template>

@@ -67,6 +67,10 @@ export const useGameStore = defineStore('game', () => {
   const scoreChange = ref<'up' | 'down' | null>(null)
   const clickBurst = ref(false)
   const valueFlash = ref(0)
+  const _joining = ref(false)
+  const _intentionalDisconnect = ref(false)
+
+  const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
 
   function triggerClickBurst() {
     clickBurst.value = true
@@ -99,7 +103,9 @@ export const useGameStore = defineStore('game', () => {
 
     socket.onclose = () => {
       connected.value = false
-      setTimeout(connect, 2000)
+      if (!_intentionalDisconnect) {
+        setTimeout(connect, 2000)
+      }
     }
 
     socket.onerror = () => {
@@ -110,6 +116,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function disconnect() {
+    _intentionalDisconnect.value = true
     if (ws.value) {
       ws.value.close()
       ws.value = null
@@ -121,6 +128,7 @@ export const useGameStore = defineStore('game', () => {
       case 'joined':
         myPlayer.value = msg.player
         gameState.value = msg.gameState
+        _joining.value = false
         if (ws.value?.readyState === WebSocket.OPEN) {
           ws.value.send(JSON.stringify({ type: 'get_upgrades' }))
         }
@@ -223,6 +231,7 @@ export const useGameStore = defineStore('game', () => {
     }
     
     setServerUrl(url)
+    _joining.value = true
     
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect(url)
@@ -230,6 +239,11 @@ export const useGameStore = defineStore('game', () => {
     } else {
       sendMsg({ type: 'join', id, name: displayName })
     }
+  }
+
+  function cancelJoin() {
+    _joining.value = false
+    disconnect()
   }
 
   function sendClick() {
@@ -298,7 +312,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin,
     join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
     myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }

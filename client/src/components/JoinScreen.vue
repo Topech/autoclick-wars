@@ -84,18 +84,17 @@ function resetServerUrl() {
         placeholder="Server URL (http://localhost)"
         maxlength="100"
         class="url-input"
+        @keyup.enter="handleJoin"
       />
       <button class="reset-url-btn" @click="resetServerUrl" title="Reset to default server">↺</button>
     </div>
 
-    <button class="join-btn animate-in delay-4" @click="handleJoin" :class="{ 'joining': store.connected, 'click': isClicking }">
-      <span v-if="!store.connected">⚔️ Join ⚔️</span>
+    <button class="join-btn" @click="handleJoin" :class="{ 'joining': store.joining, 'click': isClicking && !store.joining, 'animate-in delay-4': !store.joining }" :disabled="store.joining">
+      <span v-if="!store.joining">⚔️ Join ⚔️</span>
       <span v-else class="spinner"></span>
     </button>
 
-    <p v-if="!store.connected" class="connect-hint">
-      Connecting to server...
-    </p>
+    <button v-if="store.joining" class="cancel-btn" @click="store.cancelJoin">Cancel</button>
   </div>
 </template>
 
@@ -381,8 +380,8 @@ function resetServerUrl() {
 }
 
 .join-btn:hover::after {
-  width: 400px;
-  height: 400px;
+  width: 200px;
+  height: 200px;
 }
 
 .join-btn:hover {
@@ -410,9 +409,21 @@ function resetServerUrl() {
 }
 
 .join-btn.joining {
-  background: linear-gradient(135deg, #f472b6, #ec4899);
-  cursor: wait;
-  animation: pulse 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  cursor: not-allowed;
+  box-shadow:
+    0 4px 16px rgba(107, 114, 128, 0.4),
+    0 0 40px rgba(107, 114, 128, 0.2);
+  pointer-events: none;
+}
+
+.join-btn.joining::after {
+  display: none;
+}
+
+.join-btn:disabled {
+  opacity: 0.6;
+  transition: opacity 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 
 @keyframes pulse {
@@ -446,6 +457,25 @@ function resetServerUrl() {
   color: var(--text-muted);
   font-size: 0.9rem;
   animation: fadeInUp 0.3s ease;
+}
+
+.cancel-btn {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  position: relative;
+  z-index: 2;
+}
+
+.cancel-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 @keyframes fadeInUp {
