@@ -214,8 +214,13 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function join(name: string, url: string) {
-    const id = crypto.randomUUID()
-    const displayName = name || `player_${id.slice(0, 4)}`
+    let id = localStorage.getItem('autoclick_player_id')
+    const displayName = name || `player_${id ? id.slice(0, 4) : crypto.randomUUID().slice(0, 4)}`
+    
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem('autoclick_player_id', id)
+    }
     
     setServerUrl(url)
     

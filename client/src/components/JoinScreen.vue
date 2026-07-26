@@ -3,8 +3,10 @@ import { useGameStore } from '../stores/game'
 import { ref } from 'vue'
 
 const store = useGameStore()
-const nameInput = ref('')
-const urlInput = ref('https://autoclick-wars.onrender.com')
+const DEFAULT_SERVER = 'https://autoclick-wars.onrender.com'
+
+const nameInput = ref(localStorage.getItem('autoclick_last_name') || '')
+const urlInput = ref(localStorage.getItem('autoclick_last_server') || DEFAULT_SERVER)
 const isClicking = ref(false)
 const particles = ref<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([])
 
@@ -23,7 +25,15 @@ function handleJoin() {
   isClicking.value = true
   setTimeout(() => isClicking.value = false, 300)
 
+  localStorage.setItem('autoclick_last_name', nameInput.value.trim())
+  localStorage.setItem('autoclick_last_server', urlInput.value.trim())
+
   store.join(nameInput.value.trim(), urlInput.value.trim())
+}
+
+function resetServerUrl() {
+  urlInput.value = DEFAULT_SERVER
+  localStorage.removeItem('autoclick_last_server')
 }
 </script>
 
@@ -75,6 +85,7 @@ function handleJoin() {
         maxlength="100"
         class="url-input"
       />
+      <button class="reset-url-btn" @click="resetServerUrl" title="Reset to default server">↺</button>
     </div>
 
     <button class="join-btn animate-in delay-4" @click="handleJoin" :class="{ 'joining': store.connected, 'click': isClicking }">
@@ -244,6 +255,32 @@ function handleJoin() {
   max-width: 320px;
   position: relative;
   z-index: 1;
+}
+
+.reset-url-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.url-input-wrap:hover .reset-url-btn {
+  opacity: 1;
+}
+
+.reset-url-btn:hover {
+  background: rgba(74, 222, 128, 0.3);
+  color: var(--text);
 }
 
 .url-input {

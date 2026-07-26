@@ -1,11 +1,7 @@
 import { Player, GameState, ClickEvent } from './types.js';
 import { allUpgrades, getUpgradeCost } from './upgrades.js';
-import { savePlayer, loadPlayer, cleanupOfflinePlayers } from './db.js';
 
 const TICK_MS = 100;
-const SAVE_INTERVAL_MS = 30000;
-const CLEANUP_INTERVAL_MS = 300000;
-const OFFLINE_THRESHOLD_MS = 3600000; // 1 hour
 
 let gameState: GameState = {
   gnomesScore: 0,
@@ -48,13 +44,27 @@ export function getPlayers(): Map<string, Player> {
 }
 
 export async function joinPlayer(id: string, name: string): Promise<Player> {
-  // Try to load existing player from DB
-  const existing = await loadPlayer(id);
+  // Check if player already exists in memory (rejoin with same ID)
+  const existing = gameState.players.get(id);
   if (existing) {
     existing.name = name;
-    gameState.players.set(id, existing);
+    existing.lastSeen = Date.now();
     recalcScores();
     return existing;
+  }
+
+  // Fallback: look up by name in memory (user changed something, same name)
+  for (const [existingId, player] of gameState.players) {
+    if (player.name === name) {
+      // Reassign the old player to the new ID
+      player.id = id;
+      player.name = name;
+      player.lastSeen = Date.now();
+      gameState.players.delete(existingId);
+      gameState.players.set(id, player);
+      recalcScores();
+      return player;
+    }
   }
 
   // Assign team (balance teams)
@@ -75,7 +85,6 @@ export async function joinPlayer(id: string, name: string): Promise<Player> {
   };
 
   gameState.players.set(id, player);
-  await savePlayer(player);
   recalcScores();
   return player;
 }
@@ -185,26 +194,6 @@ export async function gameLoop(tickCallback: (state: GameState, tickCount: numbe
 
     recalcScores();
     tickCallback(gameState, tickCount);
-
-    // Save every 30 seconds
-    if (tickCount % (SAVE_INTERVAL_MS / TICK_MS) === 0) {
-      for (const player of gameState.players.values()) {
-        savePlayer(player).catch(() => {});
-      }
-    }
-
-    // Cleanup offline players every 5 minutes
-    if (tickCount % (CLEANUP_INTERVAL_MS / TICK_MS) === 0) {
-      const cutoff = Date.now() - OFFLINE_THRESHOLD_MS;
-      cleanupOfflinePlayers(cutoff).catch(() => {});
-      for (const [id, player] of gameState.players) {
-        if (player.lastSeen < cutoff) {
-          savePlayer(player).catch(() => {});
-          gameState.players.delete(id);
-        }
-      }
-      recalcScores();
-    }
   }, TICK_MS);
 
   return () => clearInterval(interval);
