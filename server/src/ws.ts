@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower } from './game.js';
 
 interface WsExt extends WebSocket {
   playerId: string;
@@ -152,6 +152,7 @@ function serializePlayer(player: any) {
     totalPoints: player.totalPoints,
     totalClicks: player.totalClicks,
     upgrades: player.upgrades,
+    clickPower: getClickPower(player),
   };
 }
 

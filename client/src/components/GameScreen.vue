@@ -46,12 +46,13 @@ setInterval(checkChanges, 50)
 
       <div class="player-bar" v-if="store.myPlayer && !store._disconnected">
         <span class="player-name">{{ store.myPlayer.name }}</span>
-        <span class="player-points" :class="{ 'flash': pointsChanged }">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
+        <span :class="{ 'flash': pointsChanged }">⚔️ Power: {{ store.myPlayer.clickPower?.toFixed(1) || 1.0 }}</span>
+        <span :class="{ 'flash': autoChanged }">🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
       </div>
 
-      <div class="stats-bar" v-if="store.myPlayer && !store._disconnected">
-        <span :class="{ 'flash': pointsChanged }">👆 Power: {{ store.myPlayer.points }}</span>
-        <span :class="{ 'flash': autoChanged }">🤖 Auto: {{ store.getAutoClickRate() }}/s</span>
+      <div class="player-bar points-bar" v-if="store.myPlayer && !store._disconnected">
+        <span class="points-pill" :class="{ 'flash': pointsChanged }">⚡ {{ store.formatNum(store.myPlayer.points) }}</span>
+        <span class="player-total">📊 {{ store.formatNum(store.myPlayer.totalPoints) }} total</span>
       </div>
 
       <ClickButton v-if="!store._disconnected" />
@@ -107,6 +108,37 @@ setInterval(checkChanges, 50)
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
+}
+
+.points-bar {
+  justify-content: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.points-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 1rem;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: transform 0.1s, color 0.2s, text-shadow 0.2s;
+}
+
+.points-pill.flash {
+  animation: valuePulse 0.3s ease;
+  background: #feca57;
+}
+
+.player-total {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  opacity: 0.6;
 }
 
 .player-name {

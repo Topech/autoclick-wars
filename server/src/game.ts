@@ -169,7 +169,17 @@ export function getAllUpgrades() {
   return allUpgrades.map(u => ({ ...u }));
 }
 
-function recalcScores(): void {
+export function getClickPower(player: Player): number {
+  const beerLevel = player.upgrades['beer_chug'] || 0;
+  const hatLevel = player.team === 'gnomes' ? (player.upgrades['hat_collection'] || 0) : 0;
+  const formationLevel = player.team === 'soldiers' ? (player.upgrades['battle_formation'] || 0) : 0;
+
+  let clickPower = Math.pow(2, beerLevel);
+  const teamBonus = 1 + hatLevel * 0.05 + formationLevel * 0.05;
+  return clickPower * teamBonus;
+}
+
+export function recalcScores(): void {
   let gnomes = 0;
   let soldiers = 0;
   for (const player of gameState.players.values()) {

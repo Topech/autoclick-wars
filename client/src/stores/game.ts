@@ -24,6 +24,7 @@ export interface Player {
   upgrades: Record<string, number>
   lastSeen: number
   createdAt: number
+  clickPower?: number
 }
 
 export interface GameState {
