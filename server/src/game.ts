@@ -11,6 +11,9 @@ let gameState: GameState = {
 
 let tickCount = 0;
 
+// Track names currently taken by active connections
+const nameToId = new Map<string, string>();
+
 export function getGameState() {
   return {
     gnomesScore: gameState.gnomesScore,
@@ -43,28 +46,37 @@ export function getPlayers(): Map<string, Player> {
   return gameState.players;
 }
 
-export async function joinPlayer(id: string, name: string): Promise<Player> {
+export function removePlayer(id: string) {
+  const player = gameState.players.get(id);
+  if (player) {
+    nameToId.delete(player.name.toLowerCase());
+    gameState.players.delete(id);
+  }
+}
+
+export function isNameTaken(name: string): boolean {
+  return nameToId.has(name.toLowerCase());
+}
+
+export async function joinPlayer(id: string, name: string): Promise<{ player?: Player; error?: string }> {
+  const normalizedName = name.toLowerCase().trim();
+
+  // Check if name is already taken by an active player
+  const existingIdForName = nameToId.get(normalizedName);
+  if (existingIdForName) {
+    return { error: `Player "${name}" is already connected` };
+  }
+
   // Check if player already exists in memory (rejoin with same ID)
   const existing = gameState.players.get(id);
   if (existing) {
+    // Remove old name mapping and add new one
+    nameToId.delete(existing.name.toLowerCase());
     existing.name = name;
     existing.lastSeen = Date.now();
+    nameToId.set(normalizedName, existing.id);
     recalcScores();
-    return existing;
-  }
-
-  // Fallback: look up by name in memory (user changed something, same name)
-  for (const [existingId, player] of gameState.players) {
-    if (player.name === name) {
-      // Reassign the old player to the new ID
-      player.id = id;
-      player.name = name;
-      player.lastSeen = Date.now();
-      gameState.players.delete(existingId);
-      gameState.players.set(id, player);
-      recalcScores();
-      return player;
-    }
+    return { player: existing };
   }
 
   // Assign team (balance teams)
@@ -85,8 +97,9 @@ export async function joinPlayer(id: string, name: string): Promise<Player> {
   };
 
   gameState.players.set(id, player);
+  nameToId.set(normalizedName, id);
   recalcScores();
-  return player;
+  return { player };
 }
 
 export function handlePlayerClick(playerId: string): ClickEvent | null {

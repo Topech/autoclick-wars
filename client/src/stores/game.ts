@@ -69,6 +69,7 @@ export const useGameStore = defineStore('game', () => {
   const valueFlash = ref(0)
   const _joining = ref(false)
   const _intentionalDisconnect = ref(false)
+  let _joinTimeoutId: ReturnType<typeof setTimeout> | null = null
 
   const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
 
@@ -90,6 +91,12 @@ export const useGameStore = defineStore('game', () => {
     socket.onopen = () => {
       connected.value = true
       error.value = null
+      _intentionalDisconnect.value = false
+      // Clear join timeout on successful connect
+      if (_joinTimeoutId) {
+        clearTimeout(_joinTimeoutId)
+        _joinTimeoutId = null
+      }
     }
 
     socket.onmessage = (event) => {
@@ -103,13 +110,28 @@ export const useGameStore = defineStore('game', () => {
 
     socket.onclose = () => {
       connected.value = false
-      if (!_intentionalDisconnect) {
+      if (!_intentionalDisconnect.value) {
         setTimeout(connect, 2000)
       }
     }
 
     socket.onerror = () => {
       error.value = 'Connection failed'
+    }
+
+    // Short timeout for ongoing reconnects (not first connect)
+    if (!_joining.value) {
+      const reconnectTimeoutId = setTimeout(() => {
+        if (!connected.value && ws.value) {
+          error.value = 'Reconnect timed out'
+          ws.value.close()
+          ws.value = null
+        }
+      }, 5000)
+
+      socket.addEventListener('open', () => {
+        clearTimeout(reconnectTimeoutId)
+      }, { once: true })
     }
 
     ws.value = socket
@@ -125,6 +147,12 @@ export const useGameStore = defineStore('game', () => {
 
   function handleMessage(msg: any) {
     switch (msg.type) {
+      case 'join_error':
+        _joining.value = false
+        error.value = msg.error || 'Join failed'
+        setTimeout(() => { error.value = null }, 5000)
+        break
+
       case 'joined':
         myPlayer.value = msg.player
         gameState.value = msg.gameState
@@ -222,6 +250,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function join(name: string, url: string) {
+    error.value = null
     let id = localStorage.getItem('autoclick_player_id')
     const displayName = name || `player_${id ? id.slice(0, 4) : crypto.randomUUID().slice(0, 4)}`
     
@@ -233,6 +262,15 @@ export const useGameStore = defineStore('game', () => {
     setServerUrl(url)
     _joining.value = true
     
+    // 15 second timeout for first connect
+    _joinTimeoutId = setTimeout(() => {
+      if (!connected.value) {
+        error.value = 'Cannot reach server'
+        _joining.value = false
+        disconnect()
+      }
+    }, 15000)
+
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect(url)
       setTimeout(() => sendMsg({ type: 'join', id, name: displayName }), 500)
@@ -243,6 +281,10 @@ export const useGameStore = defineStore('game', () => {
 
   function cancelJoin() {
     _joining.value = false
+    if (_joinTimeoutId) {
+      clearTimeout(_joinTimeoutId)
+      _joinTimeoutId = null
+    }
     disconnect()
   }
 

@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer } from './game.js';
 
 interface WsExt extends WebSocket {
   playerId: string;
@@ -44,7 +44,12 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
       switch (msg.type) {
         case 'join': {
-          const player = await joinPlayer(msg.id, msg.name);
+          const result = await joinPlayer(msg.id, msg.name);
+          if (result.error) {
+            ws.send(JSON.stringify({ type: 'join_error', error: result.error }));
+            break;
+          }
+          const player = result.player!;
           ws.playerId = player.id;
           ws.team = player.team;
           broadcastToTeam(ws.team, {
@@ -131,6 +136,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
     ws.on('close', () => {
       console.log('WebSocket disconnected');
+      removePlayer(ws.playerId);
     });
   });
 

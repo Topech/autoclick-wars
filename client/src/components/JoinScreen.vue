@@ -22,6 +22,7 @@ for (let i = 0; i < 50; i++) {
 }
 
 function handleJoin() {
+  store.error = null
   isClicking.value = true
   setTimeout(() => isClicking.value = false, 300)
 
@@ -95,6 +96,8 @@ function resetServerUrl() {
     </button>
 
     <button v-if="store.joining" class="cancel-btn" @click="store.cancelJoin">Cancel</button>
+
+    <div v-if="store.error" class="error-msg animate-in delay-4">{{ store.error }}</div>
   </div>
 </template>
 
@@ -476,6 +479,18 @@ function resetServerUrl() {
 .cancel-btn:hover {
   border-color: #ef4444;
   color: #ef4444;
+}
+
+.error-msg {
+  color: #f87171;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  max-width: 320px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
 }
 
 @keyframes fadeInUp {
