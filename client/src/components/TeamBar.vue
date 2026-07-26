@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
 import NumberTooltip from './NumberTooltip.vue'
-import { onUnmounted } from 'vue'
+import { onUnmounted, ref, computed } from 'vue'
 
 const store = useGameStore()
 let lastGnomes = 0
@@ -9,6 +9,19 @@ let lastSoldiers = 0
 let gnomesFlash = false
 let soldiersFlash = false
 let vsFlash = false
+
+const gnomeContribs = computed(() => store.contributions.filter(c => c.team === 'gnomes').slice(-10))
+const soldierContribs = computed(() => store.contributions.filter(c => c.team === 'soldiers').slice(-10))
+
+function getRandomPos() {
+  const positions = [
+    { x: -40, y: -25 }, { x: 40, y: -25 },
+    { x: -55, y: 0 }, { x: 55, y: 0 },
+    { x: -40, y: 25 }, { x: 40, y: 25 },
+    { x: 0, y: -35 }, { x: 0, y: 35 },
+  ]
+  return positions[Math.floor(Math.random() * positions.length)]
+}
 
 function checkScores() {
   const gScore = store.teamScores.gnomes
@@ -39,7 +52,12 @@ onUnmounted(() => clearInterval(interval))
     <div class="team gnome-team">
       <span class="team-emoji" :class="{ 'flash': gnomesFlash }">🍄</span>
       <span class="team-name">Gnomes</span>
-      <span class="team-score" :class="{ 'flash': gnomesFlash }"><NumberTooltip :value="store.teamScores.gnomes">{{ store.formatNum(store.teamScores.gnomes) }}</NumberTooltip></span>
+      <div class="score-wrapper">
+        <span class="team-score" :class="{ 'flash': gnomesFlash }"><NumberTooltip :value="store.teamScores.gnomes">{{ store.formatNum(store.teamScores.gnomes) }}</NumberTooltip></span>
+        <div class="contributions gnome">
+          <span v-for="c in gnomeContribs" :key="c.id" class="contribution gnome" :style="{ left: c.pos.x + 'px', top: c.pos.y + 'px' }">+{{ Math.floor(c.increase) }}</span>
+        </div>
+      </div>
     </div>
 
     <div class="vs-divider" :class="{ 'score-up': vsFlash }">
@@ -49,7 +67,12 @@ onUnmounted(() => clearInterval(interval))
     <div class="team soldier-team">
       <span class="team-emoji" :class="{ 'flash': soldiersFlash }">🔫</span>
       <span class="team-name">Soldiers</span>
-      <span class="team-score" :class="{ 'flash': soldiersFlash }"><NumberTooltip :value="store.teamScores.soldiers">{{ store.formatNum(store.teamScores.soldiers) }}</NumberTooltip></span>
+      <div class="score-wrapper">
+        <span class="team-score" :class="{ 'flash': soldiersFlash }"><NumberTooltip :value="store.teamScores.soldiers">{{ store.formatNum(store.teamScores.soldiers) }}</NumberTooltip></span>
+        <div class="contributions soldier">
+          <span v-for="c in soldierContribs" :key="c.id" class="contribution soldier" :style="{ left: c.pos.x + 'px', top: c.pos.y + 'px' }">+{{ Math.floor(c.increase) }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -138,5 +161,49 @@ onUnmounted(() => clearInterval(interval))
   0% { transform: scale(1); color: var(--text-muted); }
   50% { transform: scale(1.8); color: #feca57; text-shadow: 0 0 30px rgba(254, 202, 87, 0.8); }
   100% { transform: scale(1); color: var(--text-muted); }
+}
+
+.score-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 160px;
+  text-align: center;
+}
+
+.contributions {
+  display: flex;
+  gap: 0.3rem;
+  min-height: 1.5rem;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+}
+
+.contribution {
+  font-size: 0.85rem;
+  font-weight: 900;
+  animation: contribFloat 2s ease-out forwards;
+  pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.contribution.gnome {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
+}
+
+.contribution.soldier {
+  color: #f87171;
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.6);
+}
+
+@keyframes contribFloat {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { transform: translateY(-5px) scale(1.2); opacity: 1; }
+  80% { transform: translateY(-20px) scale(1); opacity: 1; }
+  100% { transform: translateY(-35px) scale(0.7); opacity: 0; }
 }
 </style>

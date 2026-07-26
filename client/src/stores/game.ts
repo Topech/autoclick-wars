@@ -68,6 +68,7 @@ export const useGameStore = defineStore('game', () => {
   const scoreChange = ref<'up' | 'down' | null>(null)
   const clickBurst = ref(false)
   const valueFlash = ref(0)
+  const contributions = ref<Array<{ id: number; team: 'gnomes' | 'soldiers'; increase: number }>>([])
   const _joining = ref(false)
   const _intentionalDisconnect = ref(false)
   const _disconnected = ref(false)
@@ -321,6 +322,43 @@ export const useGameStore = defineStore('game', () => {
           gameState.value.players.set(p.id, p)
         }
         break
+
+      case 'team_increase':
+        for (const inc of msg.increases || []) {
+          contributions.value.push({ id: Date.now() + Math.random(), team: inc.team, increase: inc.increase })
+        }
+        if (contributions.value.length > 10) contributions.value = contributions.value.slice(-10)
+        break
+
+      case 'contributions':
+        for (const c of msg.contributions || []) {
+          const positions = [
+            { x: -35, y: -20 }, { x: 35, y: -20 },
+            { x: -45, y: 0 }, { x: 45, y: 0 },
+            { x: -35, y: 20 }, { x: 35, y: 20 },
+            { x: 0, y: -25 }, { x: 0, y: 25 },
+            { x: -60, y: -15 }, { x: 60, y: -15 },
+            { x: -60, y: 15 }, { x: 60, y: 15 },
+            { x: -25, y: -35 }, { x: 25, y: -35 },
+            { x: -25, y: 35 }, { x: 25, y: 35 },
+            { x: -70, y: 0 }, { x: 70, y: 0 },
+            { x: -15, y: -45 }, { x: 15, y: -45 },
+            { x: -15, y: 45 }, { x: 15, y: 45 },
+            { x: -50, y: -30 }, { x: 50, y: -30 },
+            { x: -50, y: 30 }, { x: 50, y: 30 },
+            { x: -40, y: -40 }, { x: 40, y: -40 },
+            { x: -40, y: 40 }, { x: 40, y: 40 },
+            { x: -30, y: -50 }, { x: 30, y: -50 },
+            { x: -30, y: 50 }, { x: 30, y: 50 },
+          ]
+          const pos = positions[Math.floor(Math.random() * positions.length)]
+          // Add random jitter to prevent stacking
+          const jitterX = (Math.random() - 0.5) * 10
+          const jitterY = (Math.random() - 0.5) * 10
+          contributions.value.push({ id: Date.now() + Math.random(), team: c.team, increase: c.points, pos: { x: pos.x + jitterX, y: pos.y + jitterY } })
+        }
+        if (contributions.value.length > 50) contributions.value = contributions.value.slice(-50)
+        break
     }
   }
 
@@ -434,7 +472,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin, reconnect, _disconnected,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin, reconnect, _disconnected, contributions,
     join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
     myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }

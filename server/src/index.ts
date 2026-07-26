@@ -1,8 +1,12 @@
 import { gameLoop } from './game.js';
 import { startServer, broadcastToAll } from './ws.js';
+import { getContributions } from './game.js';
 
 async function main() {
+  let currentState: any = null;
+
   const stopLoop = await gameLoop((state, tick) => {
+    currentState = state;
     if (tick % 10 === 0) { // Log every second
       console.log(`[Tick ${tick}] Gnomes: ${Math.floor(state.gnomesScore).toLocaleString()} | Soldiers: ${Math.floor(state.soldiersScore).toLocaleString()} | Players: ${state.players.size}`);
     }
@@ -25,6 +29,12 @@ async function main() {
       },
       players,
     });
+
+    // Broadcast contributions immediately every tick
+    const contributions = getContributions();
+    if (contributions.length > 0) {
+      broadcastToAll({ type: 'contributions', contributions });
+    }
   });
 
   const { app, wss } = startServer();

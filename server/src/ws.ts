@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower, getRecentContributions } from './game.js';
 
 interface WsExt extends WebSocket {
   playerId: string;

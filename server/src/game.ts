@@ -14,6 +14,27 @@ let tickCount = 0;
 // Track names currently taken by active connections
 const nameToId = new Map<string, string>();
 
+interface ContributionEvent {
+  playerId: string;
+  playerName: string;
+  team: 'gnomes' | 'soldiers';
+  points: number;
+}
+
+let contributionEvents: ContributionEvent[] = [];
+
+export function addContribution(playerId: string, playerName: string, team: 'gnomes' | 'soldiers', points: number) {
+  if (points >= 1) {
+    contributionEvents.push({ playerId, playerName, team, points });
+  }
+}
+
+export function getContributions(): ContributionEvent[] {
+  const events = [...contributionEvents];
+  contributionEvents.length = 0;
+  return events;
+}
+
 export function getGameState() {
   return {
     gnomesScore: gameState.gnomesScore,
@@ -130,6 +151,8 @@ export function handlePlayerClick(playerId: string): ClickEvent | null {
   player.totalPoints += points;
   player.totalClicks++;
 
+  addContribution(player.id, player.name, player.team, points);
+
   recalcScores();
   return { playerId, points, isCrit, timestamp: Date.now() };
 }
@@ -214,6 +237,8 @@ export async function gameLoop(tickCallback: (state: GameState, tickCount: numbe
       const passivePoints = autoClickers * teamBonus * (TICK_MS / 1000);
       player.points += passivePoints;
       player.totalPoints += passivePoints;
+
+      addContribution(player.id, player.name, player.team, passivePoints);
     }
 
     recalcScores();
