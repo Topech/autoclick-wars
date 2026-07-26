@@ -7,6 +7,28 @@ const isClicking = ref(false)
 const shakeIntensity = ref(0)
 const particles = ref<Array<{ id: number; x: number; y: number; angle: number; speed: number; size: number; color: string }>>([])
 const lastClickPos = ref({ x: 0, y: 0 })
+const flashOffset = ref({ x: 0, y: 0 })
+const flashSize = ref(1.5)
+const flashDuration = ref(2)
+
+// 15 edge positions around the button (overlapping the edge)
+const EDGE_POSITIONS = [
+  { x: 0, y: -95 },    // top
+  { x: 65, y: -65 },   // top-right
+  { x: 95, y: -30 },   // right-top
+  { x: 95, y: 10 },    // right-mid
+  { x: 95, y: 55 },    // right-bottom
+  { x: 65, y: 85 },    // bottom-right
+  { x: 0, y: 95 },     // bottom
+  { x: -65, y: 85 },   // bottom-left
+  { x: -95, y: 55 },   // left-bottom
+  { x: -95, y: 10 },   // left-mid
+  { x: -95, y: -30 },  // left-top
+  { x: -65, y: -65 },  // top-left
+  { x: 45, y: -85 },   // top-right-inner
+  { x: -45, y: -85 },  // top-left-inner
+  { x: 0, y: -75 },    // top-center
+]
 
 function handleClick(e: MouseEvent) {
   isClicking.value = true
@@ -27,11 +49,16 @@ function handleClick(e: MouseEvent) {
     })
   }
 
+  const pos = EDGE_POSITIONS[Math.floor(Math.random() * EDGE_POSITIONS.length)]
+  flashOffset.value = { x: pos.x, y: pos.y }
+  flashSize.value = 1.2 + Math.random() * 1.2
+  flashDuration.value = 1 + Math.random() * 2
+
   store.sendClick()
 
   setTimeout(() => { isClicking.value = false }, 150)
   setTimeout(() => { shakeIntensity.value = 0 }, 200)
-  setTimeout(() => {cleanupParticles()}, 3000)
+  setTimeout(() => { cleanupParticles() }, 3000)
 }
 
 function cleanupParticles() {
@@ -71,7 +98,7 @@ function cleanupParticles() {
       </div>
     </div>
 
-    <p v-if="store.clickFlash" class="flash-text">{{ store.lastClickPoints > 0 ? '+' : '' }}{{ Math.floor(store.lastClickPoints) }}</p>
+    <p v-if="store.clickFlash" class="flash-text edge-float" :style="{ left: 'calc(50% + ' + flashOffset.x + 'px)', top: 'calc(50% + ' + flashOffset.y + 'px)', fontSize: flashSize + 'rem', '--duration': flashDuration + 's' }">{{ store.lastClickPoints > 0 ? '+' : '' }}{{ Math.floor(store.lastClickPoints) }}</p>
   </div>
 </template>
 
@@ -86,29 +113,24 @@ function cleanupParticles() {
 
 .flash-text {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 2.5rem;
   font-weight: 900;
   color: #feca57;
   text-shadow: 0 0 20px rgba(254, 202, 87, 0.8), 0 0 40px rgba(254, 202, 87, 0.4);
-  animation: explodeOut 0.6s ease-out forwards;
+  animation: floatEdge var(--duration) ease-out forwards;
   pointer-events: none;
-  white-space: nowrap;
 }
 
-@keyframes explodeOut {
+@keyframes floatEdge {
   0% {
-    transform: translate(-50%, -50%) scale(0.3);
+    transform: scale(0.3);
     opacity: 1;
   }
   20% {
-    transform: translate(-50%, -50%) scale(1.3);
+    transform: scale(1.3);
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, calc(-50% - 120px)) scale(0.8);
+    transform: translateY(-40px) scale(0.6);
     opacity: 0;
   }
 }
@@ -138,6 +160,7 @@ function cleanupParticles() {
 }
 
 .click-btn-wrapper {
+  position: relative;
   animation: shakeBtn 0.1s linear infinite;
   animation-iteration-count: 1;
 }
@@ -166,7 +189,34 @@ function cleanupParticles() {
   position: relative;
   overflow: hidden;
   transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-  box-shadow: var(--shadow);
+  box-shadow:
+    var(--shadow),
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.click-btn.gnome,
+.click-btn.soldier {
+  background: linear-gradient(180deg, #c45a5a 0%, #b44a4a 50%, #a33e3e 100%);
+  border: none;
+  box-shadow:
+    var(--shadow),
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -4px 0 rgba(0,0,0,0.15),
+    0 6px 0 #7a2e2e,
+    0 8px 16px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.1s ease;
+}
+
+.click-btn.gnome:hover,
+.click-btn.soldier:hover {
+  transform: translateY(4px);
+  box-shadow:
+    var(--shadow),
+    inset 0 2px 0 rgba(255,255,255,0.15),
+    inset 0 -4px 0 rgba(0,0,0,0.15),
+    0 2px 0 #7a2e2e,
+    0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-glow {
@@ -181,35 +231,13 @@ function cleanupParticles() {
   z-index: -1;
 }
 
-.click-btn:hover .btn-glow {
-  opacity: 1;
-}
-
-@keyframes glowSpin {
-  to { background-position: 200% 0; }
-}
-
 .click-btn::before {
   content: '';
   position: absolute;
   inset: 3px;
   border-radius: 50%;
   z-index: -1;
-}
-
-.gnome .click-btn::before {
-  background: linear-gradient(135deg, #2d6a4f, #52b788);
-}
-
-.soldier .click-btn::before {
-  background: linear-gradient(135deg, #9b2226, #e63946);
-}
-
-.click-btn:hover {
-  transform: scale(1.08);
-  box-shadow:
-    var(--shadow),
-    0 0 40px rgba(74, 222, 128, 0.4);
+  background: transparent;
 }
 
 .click-btn.clicking {
