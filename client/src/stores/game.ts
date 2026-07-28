@@ -66,9 +66,10 @@ export const useGameStore = defineStore('game', () => {
   const clickFlash = ref(false)
   const lastScores = ref({ gnomes: 0, soldiers: 0 })
   const scoreChange = ref<'up' | 'down' | null>(null)
-  const clickBurst = ref(false)
+  const clickBurst = ref(0)
   const valueFlash = ref(0)
   const contributions = ref<Array<{ id: number; team: 'gnomes' | 'soldiers'; increase: number; pos?: { x: number; y: number } }>>([])
+  const clickTicks = ref<Array<{ id: number; value: number; pos: { x: number; y: number }; duration: number }>>([])
   const _joining = ref(false)
   const _intentionalDisconnect = ref(false)
   const _disconnected = ref(false)
@@ -78,11 +79,32 @@ export const useGameStore = defineStore('game', () => {
 
   const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
 
+  const EDGE_POSITIONS = [
+    { x: 0, y: -95 }, { x: 65, y: -65 }, { x: 95, y: -30 }, { x: 95, y: 10 }, { x: 95, y: 55 },
+    { x: 65, y: 85 }, { x: 0, y: 95 }, { x: -65, y: 85 }, { x: -95, y: 55 }, { x: -95, y: 10 },
+    { x: -95, y: -30 }, { x: -65, y: -65 }, { x: 45, y: -85 }, { x: -45, y: -85 }, { x: 0, y: -75 },
+  ] as const
+
   function triggerClickBurst() {
-    clickBurst.value = true
-    valueFlash.value = 1
-    setTimeout(() => { clickBurst.value = false }, 200)
-    setTimeout(() => { valueFlash.value = 0 }, 300)
+    clickBurst.value++
+    valueFlash.value++
+    setTimeout(() => { clickBurst.value-- }, 200)
+    setTimeout(() => { valueFlash.value-- }, 300)
+    
+    const pos = EDGE_POSITIONS[Math.floor(Math.random() * EDGE_POSITIONS.length)]
+    const duration = 1 + Math.random() * 2
+    const tick = {
+      id: Date.now() + Math.random(),
+      value: lastClickPoints.value,
+      pos: { x: pos.x, y: pos.y },
+      duration,
+    }
+    clickTicks.value.push(tick)
+    if (clickTicks.value.length > 10) clickTicks.value.splice(0, clickTicks.value.length - 10)
+    setTimeout(() => {
+      const idx = clickTicks.value.findIndex(t => t.id === tick.id)
+      if (idx !== -1) clickTicks.value.splice(idx, 1)
+    }, duration * 1000)
   }
 
   function connect(url?: string) {
@@ -445,8 +467,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin, reconnect, _disconnected, contributions,
-    join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect,
+    connected, myPlayer, gameState, leaderboard, upgrades, error, playerName, lastClickPoints, clickFlash, scoreChange, clickBurst, valueFlash, joining, cancelJoin, reconnect, _disconnected, contributions, clickTicks,
+    join, sendClick, purchaseUpgrade, getLeaderboard, getUpgrades, connect, disconnect, triggerClickBurst,
     myTeam, teamScores, totalScore, formatNum, getUpgradeCost, getAutoClickRate,
   }
 })

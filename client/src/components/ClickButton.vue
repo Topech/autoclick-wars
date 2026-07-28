@@ -98,7 +98,12 @@ function cleanupParticles() {
       </div>
     </div>
 
-    <p v-if="store.clickFlash" class="flash-text edge-float" :style="{ left: 'calc(50% + ' + flashOffset.x + 'px)', top: 'calc(50% + ' + flashOffset.y + 'px)', fontSize: flashSize + 'rem', '--duration': flashDuration + 's' }">{{ store.lastClickPoints > 0 ? '+' : '' }}{{ Math.floor(store.lastClickPoints) }}</p>
+    <span
+      v-for="tick in store.clickTicks"
+      :key="tick.id"
+      class="click-tick edge-float"
+      :style="{ left: 'calc(50% + ' + tick.pos.x + 'px)', top: 'calc(50% + ' + tick.pos.y + 'px)' }"
+    >+{{ Math.floor(tick.value) }}</span>
   </div>
 </template>
 
@@ -291,5 +296,23 @@ function cleanupParticles() {
     opacity: 0;
     transform: translate(-50%, -150%);
   }
+}
+
+.click-tick {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #feca57;
+  text-shadow: 0 0 10px rgba(254, 202, 87, 0.6), 0 0 20px rgba(254, 202, 87, 0.3);
+  animation: clickFloat 1s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes clickFloat {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, calc(-50% - 5px)) scale(1.3); opacity: 1; }
+  80% { transform: translate(-50%, calc(-50% - 20px)) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 35px)) scale(0.7); opacity: 0; }
 }
 </style>

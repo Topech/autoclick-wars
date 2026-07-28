@@ -30,11 +30,6 @@ function checkChanges() {
   pointsChanged = myPoints !== lastPoints
   autoChanged = autoRate !== lastAuto
 
-  if (pointsChanged || autoChanged) {
-    store.clickBurst = true
-    setTimeout(() => { store.clickBurst = false }, 200)
-  }
-
   lastPoints = myPoints
   lastAuto = autoRate
 }
@@ -53,7 +48,7 @@ setInterval(checkChanges, 50)
       </div>
 
       <div class="player-bar points-bar" v-if="store.myPlayer && !store._disconnected">
-        <span class="points-pill" :class="{ 'flash': pointsChanged }">⚡ <NumberTooltip :value="store.myPlayer.points">{{ store.formatNum(store.myPlayer.points) }}</NumberTooltip></span>
+        <span class="points-pill" :class="{ 'flash': store.clickBurst > 0 }">⚡ <NumberTooltip :value="store.myPlayer.points">{{ store.formatNum(store.myPlayer.points) }}</NumberTooltip></span>
         <span class="player-total">📊 <NumberTooltip :value="store.myPlayer.totalPoints">{{ store.formatNum(store.myPlayer.totalPoints) }}</NumberTooltip> total</span>
       </div>
 
