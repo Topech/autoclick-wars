@@ -8,8 +8,6 @@ let gameState = {
 let tickCount = 0;
 // Buffer passive income per player to aggregate per-second contributions
 const passiveBuffer = new Map();
-// Track names currently taken by active connections
-const nameToId = new Map();
 let contributionEvents = [];
 export function addContribution(playerId, playerName, team, points) {
     if (points >= 1) {
@@ -49,35 +47,35 @@ export function getPlayer(playerId) {
 export function getPlayers() {
     return gameState.players;
 }
-export function removePlayer(id) {
+export function disconnectPlayer(id) {
     const player = gameState.players.get(id);
     if (player) {
-        nameToId.delete(player.name.toLowerCase());
-        // Keep player in memory so points/upgrades survive disconnects
-        // Only remove the name mapping so others can use that name
+        player.lastSeen = 0;
     }
 }
-export function isNameTaken(name) {
-    return nameToId.has(name.toLowerCase());
-}
-export async function joinPlayer(id, name) {
+export async function joinPlayer(name) {
     const normalizedName = name.toLowerCase().trim();
-    // Check if name is already taken by an active player
-    const existingIdForName = nameToId.get(normalizedName);
-    if (existingIdForName) {
-        return { error: `Player "${name}" is already connected` };
+    // Check if name is already taken by an active connection
+    for (const [pid, p] of gameState.players) {
+        if (p.name.toLowerCase() === normalizedName && p.lastSeen > 0) {
+            return { error: `Player "${name}" is already connected` };
+        }
     }
-    // Check if player already exists in memory (rejoin with same ID)
-    const existing = gameState.players.get(id);
-    if (existing) {
-        // Remove old name mapping and add new one
-        nameToId.delete(existing.name.toLowerCase());
-        existing.name = name;
-        existing.lastSeen = Date.now();
-        nameToId.set(normalizedName, existing.id);
+    // Check for disconnected entries in gameState.players with the same name (adopt their data)
+    let existingPlayer;
+    for (const [pid, p] of gameState.players) {
+        if (p.name.toLowerCase() === normalizedName && p.lastSeen === 0) {
+            existingPlayer = p;
+            break;
+        }
+    }
+    if (existingPlayer) {
+        existingPlayer.lastSeen = Date.now();
         recalcScores();
-        return { player: existing };
+        return { player: existingPlayer };
     }
+    // Generate new ID server-side
+    const id = crypto.randomUUID();
     // Assign team (balance teams)
     const gnomesCount = [...gameState.players.values()].filter(p => p.team === 'gnomes').length;
     const soldiersCount = [...gameState.players.values()].filter(p => p.team === 'soldiers').length;
@@ -94,7 +92,6 @@ export async function joinPlayer(id, name) {
         createdAt: Date.now(),
     };
     gameState.players.set(id, player);
-    nameToId.set(normalizedName, id);
     recalcScores();
     return { player };
 }

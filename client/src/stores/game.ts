@@ -189,9 +189,8 @@ export const useGameStore = defineStore('game', () => {
     // Rejoin after connecting
     setTimeout(() => {
       if (myPlayer.value && ws.value?.readyState === WebSocket.OPEN) {
-        const id = localStorage.getItem('autoclick_player_id') || myPlayer.value.id
         const name = localStorage.getItem('autoclick_last_name') || myPlayer.value.name
-        ws.value.send(JSON.stringify({ type: 'join', id, name }))
+        ws.value.send(JSON.stringify({ type: 'join', name }))
       }
     }, 500)
   }
@@ -339,16 +338,10 @@ export const useGameStore = defineStore('game', () => {
 
   function join(name: string, url: string) {
     error.value = null
-    let id = localStorage.getItem('autoclick_player_id')
-    const displayName = name || `player_${id ? id.slice(0, 4) : crypto.randomUUID().slice(0, 4)}`
-    
-    if (!id) {
-      id = crypto.randomUUID()
-      localStorage.setItem('autoclick_player_id', id)
-    }
+    const displayName = name || `player_${crypto.randomUUID().slice(0, 4)}`
     
     setServerUrl(url)
-    _joining.value = true
+    _joining.value = false
     
     // 15 second timeout for first connect
     _joinTimeoutId = setTimeout(() => {
@@ -361,9 +354,9 @@ export const useGameStore = defineStore('game', () => {
 
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect(url)
-      setTimeout(() => sendMsg({ type: 'join', id, name: displayName }), 500)
+      setTimeout(() => sendMsg({ type: 'join', name: displayName }), 500)
     } else {
-      sendMsg({ type: 'join', id, name: displayName })
+      sendMsg({ type: 'join', name: displayName })
     }
   }
 

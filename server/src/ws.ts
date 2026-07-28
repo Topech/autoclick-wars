@@ -2,12 +2,12 @@ import { WebSocketServer, WebSocket } from 'ws';
 import express from 'express';
 import type { Express } from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower, getContributions } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, disconnectPlayer, getClickPower, getContributions } from './game.js';
 
 const MIN_CLICK_INTERVAL = 10;
 const MAX_MESSAGES_PER_SECOND = 20;
 const MAX_BURST = 100;
-const MAX_CLICKS_PER_SECOND = 100;
+const MAX_CLICKS_PER_SECOND = 16;
 
 interface RateLimitState {
   lastClickAt: number;
@@ -79,7 +79,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
       switch (msg.type) {
         case 'join': {
-          const result = await joinPlayer(msg.id, msg.name);
+          const result = await joinPlayer(msg.name);
           if (result.error) {
             ws.send(JSON.stringify({ type: 'join_error', error: result.error }));
             break;
@@ -190,7 +190,9 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
     ws.on('close', () => {
       console.log('WebSocket disconnected');
-      removePlayer(ws.playerId);
+      if (ws.playerId) {
+        disconnectPlayer(ws.playerId);
+      }
     });
   });
 

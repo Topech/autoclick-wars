@@ -15,9 +15,8 @@ export declare function getGameState(): {
 export declare function getLeaderboardFromMemory(team?: 'gnomes' | 'soldiers', limit?: number): any[];
 export declare function getPlayer(playerId: string): Player | undefined;
 export declare function getPlayers(): Map<string, Player>;
-export declare function removePlayer(id: string): void;
-export declare function isNameTaken(name: string): boolean;
-export declare function joinPlayer(id: string, name: string): Promise<{
+export declare function disconnectPlayer(id: string): void;
+export declare function joinPlayer(name: string): Promise<{
     player?: Player;
     error?: string;
 }>;

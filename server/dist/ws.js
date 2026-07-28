@@ -1,7 +1,11 @@
 import { WebSocketServer } from 'ws';
 import express from 'express';
 import http from 'http';
-import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower } from './game.js';
+import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, disconnectPlayer, getClickPower } from './game.js';
+const MIN_CLICK_INTERVAL = 10;
+const MAX_MESSAGES_PER_SECOND = 20;
+const MAX_BURST = 100;
+const MAX_CLICKS_PER_SECOND = 16;
 const PORT = Number(process.env.GAME_SERVER_PORT) || 3001;
 let wss;
 export function startServer() {
@@ -28,9 +32,28 @@ export function startServer() {
             catch {
                 return;
             }
+            const now = Date.now();
+            if (!ws.rateLimit) {
+                ws.rateLimit = { lastClickAt: 0, messageTimestamps: [], burstTimestamps: [], clickTimestamps: [] };
+            }
+            const rl = ws.rateLimit;
+            rl.messageTimestamps = rl.messageTimestamps.filter(t => now - t < 1000);
+            if (rl.messageTimestamps.length >= MAX_MESSAGES_PER_SECOND) {
+                console.log(`Connection ${ws.readyState} rate limited: ${rl.messageTimestamps.length} msg/s`);
+                ws.close(4299, 'Too many messages');
+                return;
+            }
+            rl.messageTimestamps.push(now);
+            rl.burstTimestamps = rl.burstTimestamps.filter(t => now - t < 500);
+            if (rl.burstTimestamps.length >= MAX_BURST) {
+                console.log(`Connection ${ws.readyState} burst limited: ${rl.burstTimestamps.length} msgs/500ms`);
+                ws.close(4299, 'Too many messages');
+                return;
+            }
+            rl.burstTimestamps.push(now);
             switch (msg.type) {
                 case 'join': {
-                    const result = await joinPlayer(msg.id, msg.name);
+                    const result = await joinPlayer(msg.name);
                     if (result.error) {
                         ws.send(JSON.stringify({ type: 'join_error', error: result.error }));
                         break;
@@ -50,6 +73,18 @@ export function startServer() {
                     break;
                 }
                 case 'click': {
+                    const rl = ws.rateLimit;
+                    if (now - rl.lastClickAt < MIN_CLICK_INTERVAL) {
+                        return;
+                    }
+                    rl.lastClickAt = now;
+                    rl.clickTimestamps = rl.clickTimestamps.filter(t => now - t < 1000);
+                    if (rl.clickTimestamps.length >= MAX_CLICKS_PER_SECOND) {
+                        console.log(`Connection ${ws.readyState} click limited: ${rl.clickTimestamps.length + 1} clicks/s`);
+                        ws.close(4299, 'Too many clicks');
+                        return;
+                    }
+                    rl.clickTimestamps.push(now);
                     const result = handlePlayerClick(ws.playerId);
                     if (result) {
                         const player = getPlayer(ws.playerId);
@@ -123,7 +158,9 @@ export function startServer() {
         });
         ws.on('close', () => {
             console.log('WebSocket disconnected');
-            removePlayer(ws.playerId);
+            if (ws.playerId) {
+                disconnectPlayer(ws.playerId);
+            }
         });
     });
     return { app, wss };
