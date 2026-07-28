@@ -7,11 +7,13 @@ import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState
 const MIN_CLICK_INTERVAL = 10;
 const MAX_MESSAGES_PER_SECOND = 20;
 const MAX_BURST = 100;
+const MAX_CLICKS_PER_SECOND = 100;
 
 interface RateLimitState {
   lastClickAt: number;
   messageTimestamps: number[];
   burstTimestamps: number[];
+  clickTimestamps: number[];
 }
 
 interface WsExt extends WebSocket {
@@ -55,18 +57,22 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
       const now = Date.now();
       if (!ws.rateLimit) {
-        ws.rateLimit = { lastClickAt: 0, messageTimestamps: [], burstTimestamps: [] };
+        ws.rateLimit = { lastClickAt: 0, messageTimestamps: [], burstTimestamps: [], clickTimestamps: [] };
       }
 
       const rl = ws.rateLimit;
       rl.messageTimestamps = rl.messageTimestamps.filter(t => now - t < 1000);
       if (rl.messageTimestamps.length >= MAX_MESSAGES_PER_SECOND) {
+        console.log(`Connection ${ws.readyState} rate limited: ${rl.messageTimestamps.length} msg/s`);
+        ws.close(4299, 'Too many messages');
         return;
       }
       rl.messageTimestamps.push(now);
 
       rl.burstTimestamps = rl.burstTimestamps.filter(t => now - t < 500);
       if (rl.burstTimestamps.length >= MAX_BURST) {
+        console.log(`Connection ${ws.readyState} burst limited: ${rl.burstTimestamps.length} msgs/500ms`);
+        ws.close(4299, 'Too many messages');
         return;
       }
       rl.burstTimestamps.push(now);
@@ -99,6 +105,14 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
             return;
           }
           rl.lastClickAt = now;
+
+          rl.clickTimestamps = rl.clickTimestamps.filter(t => now - t < 1000);
+          if (rl.clickTimestamps.length >= MAX_CLICKS_PER_SECOND) {
+            console.log(`Connection ${ws.readyState} click limited: ${rl.clickTimestamps.length + 1} clicks/s`);
+            ws.close(4299, 'Too many clicks');
+            return;
+          }
+          rl.clickTimestamps.push(now);
 
           const result = handlePlayerClick(ws.playerId);
           if (result) {
