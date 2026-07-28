@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGameStore } from '../stores/game'
 import { ref } from 'vue'
+import GitHubIcon from './GitHubIcon.vue'
 
 const store = useGameStore()
 const DEFAULT_SERVER = 'https://autoclick-wars.onrender.com'
@@ -98,6 +99,8 @@ function resetServerUrl() {
     <button v-if="store.joining" class="cancel-btn" @click="store.cancelJoin">Cancel</button>
 
     <div v-if="store.error" class="error-msg animate-in delay-4">{{ store.error }}</div>
+
+    <GitHubIcon />
   </div>
 </template>
 
@@ -519,4 +522,17 @@ function resetServerUrl() {
     transform: translateY(0) scale(1);
   }
 }
-</style>
+
+.github-link {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  color: var(--text-muted);
+  transition: color 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.github-link:hover {
+  color: var(--text);
+  transform: scale(1.15);
+}</style>

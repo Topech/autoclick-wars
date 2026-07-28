@@ -6,6 +6,7 @@ import UpgradeShop from './UpgradeShop.vue'
 import Leaderboard from './Leaderboard.vue'
 import PlayerAvatar from './PlayerAvatar.vue'
 import NumberTooltip from './NumberTooltip.vue'
+import GitHubIcon from './GitHubIcon.vue'
 import { useGameStore } from '../stores/game'
 
 const store = useGameStore()
@@ -86,6 +87,8 @@ setInterval(checkChanges, 50)
           </button>
         </div>
       </div>
+
+      <GitHubIcon class="github-link" />
     </div>
 </template>
 

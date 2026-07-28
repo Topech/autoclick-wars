@@ -80,9 +80,12 @@ export const useGameStore = defineStore('game', () => {
   const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
 
   const EDGE_POSITIONS = [
-    { x: 0, y: -95 }, { x: 65, y: -65 }, { x: 95, y: -30 }, { x: 95, y: 10 }, { x: 95, y: 55 },
-    { x: 65, y: 85 }, { x: 0, y: 95 }, { x: -65, y: 85 }, { x: -95, y: 55 }, { x: -95, y: 10 },
-    { x: -95, y: -30 }, { x: -65, y: -65 }, { x: 45, y: -85 }, { x: -45, y: -85 }, { x: 0, y: -75 },
+    { x: 0, y: -95 }, { x: 65, y: -95 }, { x: 35, y: -85 }, { x: 95, y: -30 }, { x: 85, y: -15 }, { x: 95, y: 10 },
+    { x: 85, y: 25 }, { x: 95, y: 55 }, { x: 65, y: 85 }, { x: 35, y: 75 }, { x: 0, y: 95 },
+    { x: -35, y: 85 }, { x: -65, y: 85 }, { x: -35, y: 75 }, { x: -95, y: 55 }, { x: -85, y: 40 },
+    { x: -95, y: 10 }, { x: -85, y: -5 }, { x: -95, y: -30 }, { x: -65, y: -65 }, { x: -35, y: -75 },
+    { x: 0, y: -75 }, { x: 45, y: -85 }, { x: -45, y: -85 }, { x: 25, y: -90 }, { x: -25, y: -90 },
+    { x: 95, y: -60 }, { x: 90, y: 40 }, { x: -90, y: 40 }, { x: -95, y: -60 },
   ] as const
 
   function triggerClickBurst() {
