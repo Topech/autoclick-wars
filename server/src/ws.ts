@@ -4,9 +4,20 @@ import type { Express } from 'express';
 import http from 'http';
 import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, removePlayer, getClickPower, getContributions } from './game.js';
 
+const MIN_CLICK_INTERVAL = 10;
+const MAX_MESSAGES_PER_SECOND = 20;
+const MAX_BURST = 100;
+
+interface RateLimitState {
+  lastClickAt: number;
+  messageTimestamps: number[];
+  burstTimestamps: number[];
+}
+
 interface WsExt extends WebSocket {
   playerId: string;
   team: 'gnomes' | 'soldiers';
+  rateLimit?: RateLimitState;
 }
 
 const PORT = Number(process.env.GAME_SERVER_PORT) || 3001;
@@ -42,6 +53,24 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         return;
       }
 
+      const now = Date.now();
+      if (!ws.rateLimit) {
+        ws.rateLimit = { lastClickAt: 0, messageTimestamps: [], burstTimestamps: [] };
+      }
+
+      const rl = ws.rateLimit;
+      rl.messageTimestamps = rl.messageTimestamps.filter(t => now - t < 1000);
+      if (rl.messageTimestamps.length >= MAX_MESSAGES_PER_SECOND) {
+        return;
+      }
+      rl.messageTimestamps.push(now);
+
+      rl.burstTimestamps = rl.burstTimestamps.filter(t => now - t < 500);
+      if (rl.burstTimestamps.length >= MAX_BURST) {
+        return;
+      }
+      rl.burstTimestamps.push(now);
+
       switch (msg.type) {
         case 'join': {
           const result = await joinPlayer(msg.id, msg.name);
@@ -65,6 +94,12 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         }
 
         case 'click': {
+          const rl = ws.rateLimit;
+          if (now - rl.lastClickAt < MIN_CLICK_INTERVAL) {
+            return;
+          }
+          rl.lastClickAt = now;
+
           const result = handlePlayerClick(ws.playerId);
           if (result) {
             const player = getPlayer(ws.playerId);
