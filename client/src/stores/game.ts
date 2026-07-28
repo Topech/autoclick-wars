@@ -115,6 +115,15 @@ export const useGameStore = defineStore('game', () => {
         clearTimeout(_joinTimeoutId)
         _joinTimeoutId = null
       }
+      // Rejoin if we had a player before disconnect
+      if (myPlayer.value && ws.value?.readyState === WebSocket.OPEN) {
+        const name = localStorage.getItem('autoclick_last_name') || myPlayer.value.name
+        setTimeout(() => {
+          if (ws.value?.readyState === WebSocket.OPEN) {
+            ws.value.send(JSON.stringify({ type: 'join', name }))
+          }
+        }, 500)
+      }
       // Start heartbeat check - server broadcasts every 100ms
       _heartbeatCheck = setInterval(() => {
         if (connected.value) {
@@ -145,6 +154,7 @@ export const useGameStore = defineStore('game', () => {
     socket.onclose = () => {
       if (_heartbeatCheck) clearInterval(_heartbeatCheck)
       connected.value = false
+      myPlayer.value = null
       if (!_intentionalDisconnect.value) {
         _disconnected.value = true
         error.value = 'Disconnected from server'
@@ -407,9 +417,9 @@ export const useGameStore = defineStore('game', () => {
   const totalScore = computed(() => (teamScores.value.gnomes + teamScores.value.soldiers) || 1)
 
   function formatNum(n: number): string {
-    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`
-    if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
-    if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
+    if (n >= 1e9) return `${(Math.floor((n / 1e9) * 10) / 10).toFixed(1)}B`
+    if (n >= 1e6) return `${(Math.floor((n / 1e6) * 10) / 10).toFixed(1)}M`
+    if (n >= 1e3) return `${(Math.floor((n / 1e3) * 10) / 10).toFixed(1)}K`
     return Math.floor(n).toString()
   }
 
