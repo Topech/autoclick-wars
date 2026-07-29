@@ -6,6 +6,9 @@ List of issues to work on. Highest priorities from top to bottom. Ask the user t
 
 
 ## Dev submitted issues
+- when you disconnect, sometimes the join button on joinscreen doesn't reconnect on first try. You have to cancel and rejoin. If you reopen the tab esp on phone, it will rejoin for half a second then kick you back to the joinscreen.
+- ENSURE users cannot choose team on join through client (the server MUST dictate team distribution)
+- add an invite to team link that only works if your team is losing
 - team contributions tickers are inacurrate, we should send the passive contributions once per second BUT get the value from the players metrics, not actual passive. Basically I want to ensure +1s are included, but they're usually rounded down and not shown (hence it sending every 11 ticks not 10)
 - bug: when viewing on phone, only on the gamescreen (not join screen) the width of the html DOM element is the width of the phone screen, BUT theres empty space to the right, making the page horizontally scrollable. Only the background colour is shown there.
 - make the GAME_SERVER_HOST an env var that populates the default client server adress.
@@ -15,6 +18,7 @@ List of issues to work on. Highest priorities from top to bottom. Ask the user t
 - add a fake human test to the join screen. get them to write a 255 char message to explain why they're a human. Add these as a horizontal gallery (like reviews) under a 'proof you're playing with humans'
 - add more upgrades. They must be present for BOTH teams with same effect but differrent names.
 - add a health check to server, add UI to show health on join screen in server input
+- make actively pressing the button improve your passive clicks temporarily.
 
 
 ## Agent submitted issues
