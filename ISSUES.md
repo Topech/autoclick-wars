@@ -14,6 +14,7 @@ List of issues to work on. Highest priorities from top to bottom. Ask the user t
 - make a 'casing' around the button, so it looks like its on a device or panel. i should be circular like a rim and should be a dark colour but differentiatable from the background colours
 - add a fake human test to the join screen. get them to write a 255 char message to explain why they're a human. Add these as a horizontal gallery (like reviews) under a 'proof you're playing with humans'
 - add more upgrades. They must be present for BOTH teams with same effect but differrent names.
+- add a health check to server, add UI to show health on join screen in server input
 
 
 ## Agent submitted issues
