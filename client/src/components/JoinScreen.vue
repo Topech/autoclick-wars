@@ -100,6 +100,8 @@ function resetServerUrl() {
 
     <div v-if="store.error" class="error-msg animate-in delay-4">{{ store.error }}</div>
 
+    <div class="disclaimer">⚠️ Progress is not saved on server shutdown — you may lose your points!</div>
+
     <GitHubIcon />
   </div>
 </template>
@@ -535,4 +537,15 @@ function resetServerUrl() {
 .github-link:hover {
   color: var(--text);
   transform: scale(1.15);
+}
+
+.disclaimer {
+  color: #fbbf24;
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 320px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
 }</style>

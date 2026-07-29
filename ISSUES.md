@@ -7,14 +7,14 @@ List of issues to work on. Highest priorities from top to bottom. Ask the user t
 
 ## Dev submitted issues
 - team contributions tickers are inacurrate, we should send the passive contributions once per second BUT get the value from the players metrics, not actual passive. Basically I want to ensure +1s are included, but they're usually rounded down and not shown (hence it sending every 11 ticks not 10)
-- bug: the team 5% upgrade does not apply to whole team.
+- bug: when viewing on phone, only on the gamescreen (not join screen) the width of the html DOM element is the width of the phone screen, BUT theres empty space to the right, making the page horizontally scrollable. Only the background colour is shown there.
 - make the GAME_SERVER_HOST an env var that populates the default client server adress.
 - add sound effects on click.
-- add more upgrades. They must be present for BOTH teams with same effect but differrent names.
 - add a line chart showing the team points and player points over time? might be space intensive on server?
-- add disclaimer saying progress is not saved on server shutdown, so you may lose your points!
 - make a 'casing' around the button, so it looks like its on a device or panel. i should be circular like a rim and should be a dark colour but differentiatable from the background colours
 - add a fake human test to the join screen. get them to write a 255 char message to explain why they're a human. Add these as a horizontal gallery (like reviews) under a 'proof you're playing with humans'
+- add more upgrades. They must be present for BOTH teams with same effect but differrent names.
+
 
 ## Agent submitted issues
 
