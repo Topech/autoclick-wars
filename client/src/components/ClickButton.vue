@@ -206,7 +206,7 @@ function cleanupParticles() {
 }
 
 @keyframes clickMove {
-  to { transform: translateY(7.5px); }
+  to { transform: translateY(7.5px) scale(0.97); }
 }
 
 @keyframes shakeBtn {
