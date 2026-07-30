@@ -8,8 +8,8 @@ const MIN_CLICK_INTERVAL = 10;
 const MAX_MESSAGES_PER_SECOND = 20;
 const MAX_BURST = 100;
 const MAX_CLICKS_PER_SECOND = 16;
-const JOIN_RATE_LIMIT = 5;
-const JOIN_RATE_WINDOW_MS = 60_000;
+const PLAYER_JOIN_LIMIT = 5;
+const PLAYER_JOIN_WINDOW_MS = 60_000;
 
 interface RateLimitState {
   lastClickAt: number;
@@ -45,8 +45,8 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
     console.log('WebSocket server closed');
   });
 
-  // Global IP join rate tracking
-  const ipJoinAttempts = new Map<string, number[]>();
+  // Global player join rate tracking
+  const recentJoins: number[] = [];
 
   wss.on('connection', (wsRaw: unknown, req: http.IncomingMessage) => {
     const ws = wsRaw as WsExt;
@@ -99,17 +99,14 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
             break;
           }
 
-          // IP-based join rate limiting
-          const clientIp = (req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
-          const existingAttempts = ipJoinAttempts.get(clientIp) || [];
-          const currentAttempts = existingAttempts.filter(t => now - t < JOIN_RATE_WINDOW_MS);
-          if (currentAttempts.length >= JOIN_RATE_LIMIT) {
-            ipJoinAttempts.set(clientIp, currentAttempts);
-            ws.send(JSON.stringify({ type: 'join_error', error: 'Too many join attempts, try again later' }));
+          // Global player join rate limiting
+          recentJoins.push(now);
+          const recent = recentJoins.filter(t => now - t < PLAYER_JOIN_WINDOW_MS);
+          if (recent.length > PLAYER_JOIN_LIMIT) {
+            recentJoins.pop();
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Too many players joining, try again later' }));
             break;
           }
-          currentAttempts.push(now);
-          ipJoinAttempts.set(clientIp, currentAttempts);
 
           const result = await joinPlayer(normalizedName);
           if (result.error) {

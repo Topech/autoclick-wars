@@ -48,26 +48,12 @@ If you're asked to add issues, place them in Agent submitted issues. prepend (us
 	- mint secret token on first join, store its hash on player
 	- require token to reclaim name; no match → new player
 
-#### Medium — do these next
-5. Guard every broadcast send
-	- check `readyState === WebSocket.OPEN` before `ws.send`
-	- wrap in try/catch to prevent one failure killing the loop
-6. Validate and clamp all inputs
-	- reject non-string names, cap name length server-side
-	- clamp quantity: `Math.max(1, Math.min(1000, Math.floor(Number(msg.quantity)) || 1))`
-7. Lock down the socket itself
-	- set small `maxPayload` on WebSocketServer
-	- add `verifyClient`/origin check to block unauthorized bots
-
 #### Hygiene / perf / robustness
 8. Don't recompute scores from scratch each click
 	- keep `gnomesScore`/`soldiersScore` as running totals, add delta per click/tick (O(1))
 	- reconcile occasionally if worried about float drift
 9. Decide what happens on restart
 	- persist state to file/DB if scores matter across deploys
-10. Add friction against botting (if it continues)
-	- lightweight proof-of-work or CAPTCHA at join
-	- cap single-player contribution to team score per minute
 
 
 #### User-provided — progression / endgame
