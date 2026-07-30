@@ -52,7 +52,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
   app.use(express.static('../client/dist'));
 
   const httpServer = http.createServer(app);
-  wss = new WebSocketServer({ server: httpServer, maxPayload: 1024 });
+  wss = new WebSocketServer({ server: httpServer, maxPayload: 65536 });
 
   const HOST: string = '0.0.0.0';
   httpServer.listen(PORT, HOST, undefined, () => {
