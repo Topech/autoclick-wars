@@ -6,6 +6,7 @@ List of issues to work on. Highest priorities from top to bottom. Ask the user t
 
 
 ## Dev submitted issues
+- compress websocket messages
 - make github actions build the client bc i keep forgetting to. Also re-add client/dist/ to .gitignore once done.
 - when you disconnect, sometimes the join button on joinscreen doesn't reconnect on first try. You have to cancel and rejoin. If you reopen the tab esp on phone, it will rejoin for half a second then kick you back to the joinscreen.
 - ENSURE users cannot choose team on join through client (the server MUST dictate team distribution)
