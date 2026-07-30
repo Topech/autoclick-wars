@@ -2,6 +2,7 @@
 import { useGameStore } from '../stores/game'
 import { ref } from 'vue'
 import GitHubIcon from './GitHubIcon.vue'
+import VueHcaptcha from '@hcaptcha/vue3-hcaptcha'
 
 const store = useGameStore()
 const DEFAULT_SERVER = 'https://autoclick-wars.onrender.com'
@@ -9,6 +10,13 @@ const DEFAULT_SERVER = 'https://autoclick-wars.onrender.com'
 const nameInput = ref(localStorage.getItem('autoclick_last_name') || '')
 const urlInput = ref(localStorage.getItem('autoclick_last_server') || DEFAULT_SERVER)
 const isClicking = ref(false)
+const hcaptchaSitekey = import.meta.env.VITE_GAME_HCAPTCHA_SITEKEY || ''
+const hcaptchaToken = ref('')
+
+function onVerify(token: string) {
+  hcaptchaToken.value = token
+}
+
 const particles = ref<Array<{ id: number; x: number; y: number; size: number; duration: number; delay: number }>>([])
 
 for (let i = 0; i < 50; i++) {
@@ -30,7 +38,7 @@ function handleJoin() {
   localStorage.setItem('autoclick_last_name', nameInput.value.trim())
   localStorage.setItem('autoclick_last_server', urlInput.value.trim())
 
-  store.join(nameInput.value.trim(), urlInput.value.trim())
+  store.join(nameInput.value.trim(), urlInput.value.trim(), hcaptchaToken.value)
 }
 
 function resetServerUrl() {
@@ -97,6 +105,13 @@ function resetServerUrl() {
     </button>
 
     <button v-if="store.joining" class="cancel-btn" @click="store.cancelJoin">Cancel</button>
+
+    <div v-if="hcaptchaSitekey && !store.joining" class="hcaptcha-wrap animate-in delay-4">
+      <vue-hcaptcha
+        :sitekey="hcaptchaSitekey"
+        @verify="onVerify"
+      />
+    </div>
 
     <div v-if="store.error" class="error-msg animate-in delay-4">{{ store.error }}</div>
 
@@ -548,4 +563,13 @@ function resetServerUrl() {
   background: rgba(251, 191, 36, 0.1);
   border: 1px solid rgba(251, 191, 36, 0.3);
   border-radius: 8px;
-}</style>
+}
+
+.hcaptcha-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 78px;
+  margin: 0.5rem 0;
+}
+</style>

@@ -371,7 +371,7 @@ export const useGameStore = defineStore('game', () => {
     setTimeout(() => { clickFlash.value = false }, 200)
   }
 
-  function join(name: string, url: string) {
+  function join(name: string, url: string, hcaptchaToken?: string) {
     error.value = null
     const displayName = name || `player_${crypto.randomUUID().slice(0, 4)}`
     
@@ -389,9 +389,9 @@ export const useGameStore = defineStore('game', () => {
 
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect(url)
-      setTimeout(() => sendMsg({ type: 'join', name: displayName }), 500)
+      setTimeout(() => sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken }), 500)
     } else {
-      sendMsg({ type: 'join', name: displayName })
+      sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken })
     }
   }
 

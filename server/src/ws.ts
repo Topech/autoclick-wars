@@ -4,6 +4,24 @@ import type { Express } from 'express';
 import http from 'http';
 import { joinPlayer, handlePlayerClick, buyUpgrade, getUpgradeInfo, getGameState, getAllUpgrades, getLeaderboardFromMemory, getPlayer, disconnectPlayer, getClickPower, getContributions } from './game.js';
 
+const HCAPTCHA_SECRET = process.env.GAME_HCAPTCHA_SECRET || '';
+const HCAPTCHA_SITEKEY = process.env.GAME_HCAPTCHA_SITEKEY || '';
+
+async function verifyHcaptcha(token: string): Promise<boolean> {
+  if (!HCAPTCHA_SECRET) return true;
+  try {
+    const res = await fetch('https://hcaptcha.com/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret: HCAPTCHA_SECRET, response: token }).toString(),
+    });
+    const data = await res.json();
+    return !!data.success;
+  } catch {
+    return false;
+  }
+}
+
 const MIN_CLICK_INTERVAL = 10;
 const MAX_MESSAGES_PER_SECOND = 20;
 const MAX_BURST = 100;
@@ -84,6 +102,19 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
       switch (msg.type) {
         case 'join': {
+          // Validate hCaptcha token if configured
+          if (HCAPTCHA_SECRET && (!msg.hcaptcha_token || typeof msg.hcaptcha_token !== 'string')) {
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Please complete the captcha' }));
+            break;
+          }
+          if (HCAPTCHA_SECRET && msg.hcaptcha_token) {
+            const valid = await verifyHcaptcha(msg.hcaptcha_token);
+            if (!valid) {
+              ws.send(JSON.stringify({ type: 'join_error', error: 'Captcha verification failed' }));
+              break;
+            }
+          }
+
           // Validate name
           if (typeof msg.name !== 'string') {
             ws.send(JSON.stringify({ type: 'join_error', error: 'Name must be a string' }));
