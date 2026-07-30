@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 const store = useGameStore()
 const isClicking = ref(false)
+const clickCount = ref(0)
 const shakeIntensity = ref(0)
 const particles = ref<Array<{ id: number; x: number; y: number; angle: number; speed: number; size: number; color: string }>>([])
 const lastClickPos = ref({ x: 0, y: 0 })
@@ -32,6 +33,7 @@ const EDGE_POSITIONS = [
 
 function handleClick(e: MouseEvent) {
   isClicking.value = true
+  clickCount.value++
   shakeIntensity.value = 12
   lastClickPos.value = { x: e.clientX, y: e.clientY }
 
@@ -87,7 +89,7 @@ function cleanupParticles() {
 
     <div class="click-btn-casing">
       <div class="floor-shadow"></div>
-      <div class="click-btn-wrapper" :style="{ animationDuration: shakeIntensity > 0 ? '0.1s' : '0s', animationIterationCount: shakeIntensity > 0 ? 'infinite' : '1' }">
+      <div class="click-btn-wrapper" :key="clickCount" :class="{ clicking: isClicking }" :style="{ animationDuration: shakeIntensity > 0 ? '0.1s' : '0s', animationIterationCount: shakeIntensity > 0 ? 'infinite' : '1' }">
         <div
           class="click-btn"
           :class="{ clicking: isClicking, gnome: store.myPlayer?.team === 'gnomes', soldier: store.myPlayer?.team === 'soldiers' }"
@@ -117,30 +119,6 @@ function cleanupParticles() {
   align-items: center;
   padding: 2rem;
   position: relative;
-}
-
-.flash-text {
-  position: absolute;
-  font-weight: 900;
-  color: #feca57;
-  text-shadow: 0 0 20px rgba(254, 202, 87, 0.8), 0 0 40px rgba(254, 202, 87, 0.4);
-  animation: floatEdge var(--duration) ease-out forwards;
-  pointer-events: none;
-}
-
-@keyframes floatEdge {
-  0% {
-    transform: scale(0.3);
-    opacity: 1;
-  }
-  20% {
-    transform: scale(1.3);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-40px) scale(0.6);
-    opacity: 0;
-  }
 }
 
 .particle-container {
@@ -184,6 +162,7 @@ function cleanupParticles() {
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
 .click-btn-casing::before {
@@ -218,9 +197,16 @@ function cleanupParticles() {
 
 .click-btn-wrapper {
   position: relative;
-  animation: shakeBtn 0.1s linear infinite;
-  animation-iteration-count: 1;
   top: -24px;
+}
+
+.click-btn-wrapper.clicking {
+  animation: shakeBtn 0.1s linear infinite, clickMove 0.05s ease-out forwards;
+  animation-iteration-count: 1;
+}
+
+@keyframes clickMove {
+  to { transform: translateY(7.5px); }
 }
 
 @keyframes shakeBtn {
@@ -246,7 +232,8 @@ function cleanupParticles() {
   color: white;
   position: relative;
   overflow: hidden;
-  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  user-select: none;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   box-shadow:
     var(--shadow),
     0 8px 32px rgba(0, 0, 0, 0.25),
@@ -299,34 +286,7 @@ function cleanupParticles() {
 }
 
 .click-btn.clicking {
-  animation: clickPulse 0.15s ease;
-}
-
-@keyframes clickPulse {
-  0% { transform: scale(1); }
-  30% { transform: scale(0.82) rotate(-5deg); }
-  60% { transform: scale(1.15) rotate(3deg); }
-  100% { transform: scale(1) rotate(0); }
-}
-
-.click-btn.clicking::after {
-  content: '';
-  position: absolute;
-  inset: -20px;
-  border-radius: 50%;
-  border: 3px solid rgba(74, 222, 128, 0.6);
-  animation: ringExpand 0.4s ease-out forwards;
-}
-
-@keyframes ringExpand {
-  0% {
-    transform: scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+  animation: none;
 }
 
 .btn-emoji {
