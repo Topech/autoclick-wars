@@ -69,15 +69,9 @@ If you're asked to add issues, place them in Agent submitted issues. prepend (us
 	- e.g. +1000 auto-clickers per tick at massive cost
 
 #### User-provided — botting / join security
-91. Add CAPTCHA to join screen
-	- prevent automated tab-spam bots from creating accounts
-	- reCAPTCHA or hCaptcha (requires API keys)
-	- client solves challenge → sends token with join request
-	- server verifies token via provider's API
 
 #### Developer submitted issues
 - minify the websocket packets, or make them as small as possible to reduce bandwidth. DO NOT USE compression, we dont have the ram for it.
-- make github actions build the client bc i keep forgetting to. Also re-add client/dist/ to .gitignore once done.
 - when you disconnect, sometimes the join button on joinscreen doesn't reconnect on first try. You have to cancel and rejoin. If you reopen the tab esp on phone, it will rejoin for half a second then kick you back to the joinscreen.
 - ENSURE users cannot choose team on join through client (the server MUST dictate team distribution)
 - add an invite to team link that only works if your team is losing
