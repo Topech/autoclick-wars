@@ -74,10 +74,11 @@ export const useGameStore = defineStore('game', () => {
   const _intentionalDisconnect = ref(false)
   const _disconnected = ref(false)
   let _joinTimeoutId: ReturnType<typeof setTimeout> | null = null
+  let _reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null
   let _lastMessageTime = Date.now()
   let _heartbeatCheck: ReturnType<typeof setInterval> | null = null
 
-  const joining = computed(() => _joining.value || (connected.value && !myPlayer.value))
+  const joining = computed(() => (_joining.value || connected.value) && !myPlayer.value)
 
   const EDGE_POSITIONS = [
     { x: 0, y: -95 }, { x: 65, y: -95 }, { x: 35, y: -85 }, { x: 95, y: -30 }, { x: 85, y: -15 }, { x: 95, y: 10 },
@@ -112,6 +113,7 @@ export const useGameStore = defineStore('game', () => {
 
   function connect(url?: string) {
     disconnect()
+    _intentionalDisconnect.value = false
     const serverUrl = url || getServerUrl()
     const wsUrl = serverUrl
       .replace(/^http/, 'ws')
@@ -183,12 +185,21 @@ export const useGameStore = defineStore('game', () => {
       if (!_intentionalDisconnect.value) {
         _disconnected.value = true
         error.value = 'Disconnected from server'
-        setTimeout(connect, 2000)
+        _reconnectTimeoutId = setTimeout(() => {
+          _reconnectTimeoutId = null
+          connect()
+        }, 2000)
       }
     }
 
     socket.onerror = () => {
       error.value = 'Connection failed'
+      // Close the socket on error to prevent it from hanging in CONNECTING state
+      setTimeout(() => {
+        if (ws.value?.readyState === WebSocket.CONNECTING) {
+          ws.value.close()
+        }
+      }, 100)
     }
 
     // Short timeout for ongoing reconnects (not first connect)
@@ -211,6 +222,10 @@ export const useGameStore = defineStore('game', () => {
 
   function disconnect() {
     _intentionalDisconnect.value = true
+    if (_reconnectTimeoutId) {
+      clearTimeout(_reconnectTimeoutId)
+      _reconnectTimeoutId = null
+    }
     if (ws.value) {
       ws.value.close()
       ws.value = null
@@ -221,13 +236,20 @@ export const useGameStore = defineStore('game', () => {
     _disconnected.value = false
     error.value = null
     connect()
-    // Rejoin after connecting
-    setTimeout(() => {
-      if (myPlayer.value && ws.value?.readyState === WebSocket.OPEN) {
-        const name = localStorage.getItem('autoclick_last_name') || myPlayer.value.name
-        ws.value.send(JSON.stringify({ type: 'join', name }))
+    // Wait for socket to open, then send join message
+    let retries = 0
+    const tryRejoin = () => {
+      if (ws.value?.readyState === WebSocket.OPEN) {
+        const name = localStorage.getItem('autoclick_last_name') || myPlayer.value?.name || ''
+        if (name) {
+          ws.value.send(JSON.stringify({ type: 'join', name }))
+        }
+      } else if (retries < 10) {
+        retries++
+        setTimeout(tryRejoin, 500)
       }
-    }, 500)
+    }
+    setTimeout(tryRejoin, 100)
   }
 
   function handleMessage(msg: any) {
@@ -376,7 +398,7 @@ export const useGameStore = defineStore('game', () => {
     const displayName = name || `player_${crypto.randomUUID().slice(0, 4)}`
     
     setServerUrl(url)
-    _joining.value = false
+    _joining.value = true
     
     // 15 second timeout for first connect
     _joinTimeoutId = setTimeout(() => {
@@ -389,7 +411,24 @@ export const useGameStore = defineStore('game', () => {
 
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       connect(url)
-      setTimeout(() => sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken }), 500)
+      // Wait for socket to open, then send join message
+      setTimeout(() => {
+        if (ws.value?.readyState === WebSocket.OPEN) {
+          sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken })
+        } else {
+          // Socket hasn't opened yet, wait and retry a few times
+          let retries = 0
+          const checkSocket = () => {
+            if (ws.value?.readyState === WebSocket.OPEN) {
+              sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken })
+            } else if (retries < 5) {
+              retries++
+              setTimeout(checkSocket, 500)
+            }
+          }
+          setTimeout(checkSocket, 500)
+        }
+      }, 100)
     } else {
       sendMsg({ type: 'join', name: displayName, hcaptcha_token: hcaptchaToken })
     }
