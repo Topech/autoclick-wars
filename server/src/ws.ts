@@ -8,6 +8,8 @@ const MIN_CLICK_INTERVAL = 10;
 const MAX_MESSAGES_PER_SECOND = 20;
 const MAX_BURST = 100;
 const MAX_CLICKS_PER_SECOND = 16;
+const JOIN_RATE_LIMIT = 5;
+const JOIN_RATE_WINDOW_MS = 60_000;
 
 interface RateLimitState {
   lastClickAt: number;
@@ -32,7 +34,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
   app.use(express.static('../client/dist'));
 
   const httpServer = http.createServer(app);
-  wss = new WebSocketServer({ server: httpServer });
+  wss = new WebSocketServer({ server: httpServer, maxPayload: 1024 });
 
   const HOST: string = '0.0.0.0';
   httpServer.listen(PORT, HOST, undefined, () => {
@@ -43,7 +45,10 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
     console.log('WebSocket server closed');
   });
 
-  wss.on('connection', (wsRaw: unknown) => {
+  // Global IP join rate tracking
+  const ipJoinAttempts = new Map<string, number[]>();
+
+  wss.on('connection', (wsRaw: unknown, req: http.IncomingMessage) => {
     const ws = wsRaw as WsExt;
     console.log('New WebSocket connection');
 
@@ -79,7 +84,34 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
 
       switch (msg.type) {
         case 'join': {
-          const result = await joinPlayer(msg.name);
+          // Validate name
+          if (typeof msg.name !== 'string') {
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Name must be a string' }));
+            break;
+          }
+          const normalizedName = msg.name.trim();
+          if (normalizedName.length === 0) {
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Name cannot be empty' }));
+            break;
+          }
+          if (normalizedName.length > 30) {
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Name too long (max 30 characters)' }));
+            break;
+          }
+
+          // IP-based join rate limiting
+          const clientIp = (req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+          const existingAttempts = ipJoinAttempts.get(clientIp) || [];
+          const currentAttempts = existingAttempts.filter(t => now - t < JOIN_RATE_WINDOW_MS);
+          if (currentAttempts.length >= JOIN_RATE_LIMIT) {
+            ipJoinAttempts.set(clientIp, currentAttempts);
+            ws.send(JSON.stringify({ type: 'join_error', error: 'Too many join attempts, try again later' }));
+            break;
+          }
+          currentAttempts.push(now);
+          ipJoinAttempts.set(clientIp, currentAttempts);
+
+          const result = await joinPlayer(normalizedName);
           if (result.error) {
             ws.send(JSON.stringify({ type: 'join_error', error: result.error }));
             break;
@@ -133,7 +165,7 @@ export function startServer(): { app: Express; wss: WebSocketServer } {
         }
 
         case 'buy_upgrade': {
-          const quantity = msg.quantity || 1;
+          const quantity = Math.max(1, Math.min(1000, Math.floor(Number(msg.quantity)) || 1));
           let result: { success: boolean; cost: number; newLevel: number } = { success: false, cost: 0, newLevel: 0 };
           for (let i = 0; i < quantity; i++) {
             result = buyUpgrade(ws.playerId, msg.upgradeId);
@@ -212,11 +244,21 @@ function serializePlayer(player: any) {
   };
 }
 
+function safeSend(ws: WebSocket, data: string): boolean {
+  if (ws.readyState !== WebSocket.OPEN) return false;
+  try {
+    ws.send(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function broadcastToTeam(team: string, message: any) {
   const data = JSON.stringify(message);
   for (const ws of wss.clients) {
     if ((ws as WsExt).team === team) {
-      (ws as WebSocket).send(data);
+      safeSend(ws as WebSocket, data);
     }
   }
 }
@@ -224,7 +266,7 @@ function broadcastToTeam(team: string, message: any) {
 export function broadcastToAll(message: any) {
   const data = JSON.stringify(message);
   for (const ws of wss.clients) {
-    (ws as WebSocket).send(data);
+    safeSend(ws as WebSocket, data);
   }
 }
 
