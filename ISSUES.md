@@ -70,7 +70,19 @@ If you're asked to add issues, place them in Agent submitted issues. prepend (us
 	- cap single-player contribution to team score per minute
 
 
-### Developer submitted issues
+#### User-provided — progression / endgame
+87. Fix late-game standstill at high levels
+	- player hits lvl 30 team bonus + 50 auto-clickers and progress grinds to a halt
+88. Add prestige system
+	- prestige costs scale (1M → 10M → 100M etc.)
+	- resets upgrades to nothing, grants permanent multiplier (e.g. 50%)
+89. Add more manual click interaction upgrades
+	- e.g. manual click gives +5% of auto-clicker amount
+	- auto-clickers that count as manual clicks
+90. Add high-tier expensive upgrades
+	- e.g. +1000 auto-clickers per tick at massive cost
+
+#### Developer submitted issues
 - make github actions build the client bc i keep forgetting to. Also re-add client/dist/ to .gitignore once done.
 - when you disconnect, sometimes the join button on joinscreen doesn't reconnect on first try. You have to cancel and rejoin. If you reopen the tab esp on phone, it will rejoin for half a second then kick you back to the joinscreen.
 - ENSURE users cannot choose team on join through client (the server MUST dictate team distribution)
