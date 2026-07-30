@@ -85,16 +85,19 @@ function cleanupParticles() {
       ></div>
     </div>
 
-    <div class="click-btn-wrapper" :style="{ animationDuration: shakeIntensity > 0 ? '0.1s' : '0s', animationIterationCount: shakeIntensity > 0 ? 'infinite' : '1' }">
-      <div
-        class="click-btn"
-        :class="{ clicking: isClicking, gnome: store.myPlayer?.team === 'gnomes', soldier: store.myPlayer?.team === 'soldiers' }"
-        :style="{ '--shake': shakeIntensity + 'px' }"
-      >
+    <div class="click-btn-casing">
+      <div class="floor-shadow"></div>
+      <div class="click-btn-wrapper" :style="{ animationDuration: shakeIntensity > 0 ? '0.1s' : '0s', animationIterationCount: shakeIntensity > 0 ? 'infinite' : '1' }">
+        <div
+          class="click-btn"
+          :class="{ clicking: isClicking, gnome: store.myPlayer?.team === 'gnomes', soldier: store.myPlayer?.team === 'soldiers' }"
+          :style="{ '--shake': shakeIntensity + 'px' }"
+        >
         <span class="btn-glow"></span>
         <span v-if="store.myPlayer?.team === 'gnomes'" class="btn-emoji">🍄</span>
         <span v-else class="btn-emoji">🔫</span>
         <span class="btn-text">CLICK!</span>
+        </div>
       </div>
     </div>
 
@@ -164,10 +167,60 @@ function cleanupParticles() {
   }
 }
 
+.click-btn-casing {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #1e2a3a 0%, #162030 50%, #111927 100%);
+  border: 1px solid #2a3a4e;
+  box-shadow:
+    inset 0 6px 16px rgba(0,0,0,0.7),
+    inset 0 -2px 8px rgba(255,255,255,0.03),
+    inset 4px 4px 12px rgba(255,255,255,0.02),
+    inset -4px 2px 8px rgba(0,0,0,0.2),
+    0 6px 24px rgba(0,0,0,0.5),
+    0 3px 0 #0d1520;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.click-btn-casing::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 30%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+}
+
+.click-btn-casing::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.click-btn-casing .floor-shadow {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 24px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
 .click-btn-wrapper {
   position: relative;
   animation: shakeBtn 0.1s linear infinite;
   animation-iteration-count: 1;
+  top: -24px;
 }
 
 @keyframes shakeBtn {
@@ -178,8 +231,8 @@ function cleanupParticles() {
 }
 
 .click-btn {
-  width: 180px;
-  height: 180px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
